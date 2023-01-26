@@ -1,5 +1,4 @@
-import { Body, Controller, Get, HttpStatus, Post, Res } from '@nestjs/common';
-import { Response } from 'express';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { UserDto } from './user.dto';
 
 @Controller('users')
@@ -19,11 +18,12 @@ export class UserController {
   }
 
   @Post()
-  createUser(@Body() user: UserDto, @Res() res: Response) {
-    const { username, password } = user;
-    res.status(HttpStatus.CREATED).json({
-      username,
-      password,
-    });
+  createUser(@Body() user: UserDto): UserDto {
+    user.id = 1;
+    user.createdAt = new Date();
+    user.updatedAt = new Date();
+
+    const userReal = UserDto.plainToClass(user);
+    return userReal;
   }
 }
