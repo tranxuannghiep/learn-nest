@@ -11,7 +11,7 @@ export class UserService {
     user.createdAt = new Date();
     user.updatedAt = new Date();
 
-    const userReal = UserDto.plainToClass(user);
+    const userReal = UserDto.plainToInstance(user);
     return userReal;
   }
 }
