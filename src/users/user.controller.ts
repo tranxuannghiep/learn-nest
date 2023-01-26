@@ -1,8 +1,11 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { UserDto } from './user.dto';
+import { UserService } from './user.service';
 
 @Controller('users')
 export class UserController {
+  constructor(private readonly userService: UserService) {}
+
   @Get()
   getAllUsers() {
     return [
@@ -19,11 +22,6 @@ export class UserController {
 
   @Post()
   createUser(@Body() user: UserDto): UserDto {
-    user.id = 1;
-    user.createdAt = new Date();
-    user.updatedAt = new Date();
-
-    const userReal = UserDto.plainToClass(user);
-    return userReal;
+    return this.userService.createUser(user);
   }
 }
