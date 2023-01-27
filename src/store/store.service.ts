@@ -1,11 +1,11 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { StoreConfig } from './store.module';
+import { Injectable, Inject, Optional } from '@nestjs/common';
 import * as fs from 'fs';
+import { StoreConfig, STORE_CONFIG } from './store.config';
 
 @Injectable()
 export class StoreService {
   constructor(
-    @Inject('STORE_CONFIG') private readonly storeConfig: StoreConfig,
+    @Optional() @Inject(STORE_CONFIG) private readonly storeConfig: StoreConfig,
   ) {
     if (!fs.existsSync(this.storeConfig.dirname)) {
       fs.mkdirSync(this.storeConfig.dirname);
