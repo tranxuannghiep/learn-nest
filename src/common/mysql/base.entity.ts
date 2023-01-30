@@ -5,7 +5,7 @@ import {
   DeleteDateColumn,
 } from 'typeorm';
 
-export abstract class BaseEntity {
+export abstract class BaseEntity<T> {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -23,4 +23,8 @@ export abstract class BaseEntity {
     name: 'deleted_at',
   })
   softDeleteAt: Date;
+
+  constructor(partial: Partial<T>) {
+    Object.assign(this, partial);
+  }
 }

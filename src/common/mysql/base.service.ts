@@ -1,8 +1,7 @@
 import { Repository } from 'typeorm';
-import { BaseDto } from '../base.dto';
 import { BaseEntity } from './base.entity';
 
-export class BaseService<Entity extends BaseEntity, Dto extends BaseDto> {
+export class BaseService<Entity extends BaseEntity<Entity>> {
   constructor(protected repo: Repository<Entity>) {}
   //   async save(data: Dto): Promise<Dto> {
   //     const saveData = await this.repo.save(data);
