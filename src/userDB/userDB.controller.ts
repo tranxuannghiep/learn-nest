@@ -12,6 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
+import { LoginUser } from './dto/login-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDBService } from './userDB.service';
 
@@ -51,5 +52,10 @@ export class UserDBController {
   async deleteUserById(@Param('id') id: number) {
     await this.userDBService.deleteUserById(id);
     return { message: 'delete successfully' };
+  }
+
+  @Post('login')
+  login(@Body() loginPayload: LoginUser) {
+    return this.userDBService.login(loginPayload);
   }
 }
