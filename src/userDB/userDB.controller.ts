@@ -6,7 +6,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  NotFoundException,
   Param,
   Post,
   Put,
@@ -37,7 +36,6 @@ export class UserDBController {
   @Get(':id')
   async getUserById(@Param('id') id: number) {
     const user = await this.userDBService.getUserById(id);
-    if (!user) throw new NotFoundException();
     return { data: user };
   }
 
