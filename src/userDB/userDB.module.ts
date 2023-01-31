@@ -8,5 +8,6 @@ import { UserDBService } from './userDB.service';
   imports: [TypeOrmModule.forFeature([UserDBEntity])],
   controllers: [UserDBController],
   providers: [UserDBService],
+  exports: [UserDBService],
 })
 export class UserDBModule {}
