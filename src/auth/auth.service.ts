@@ -22,9 +22,8 @@ export class AuthService {
     return existedUser;
   }
   async login(user: UserDBEntity) {
-    const payload = { username: user.username, sub: user.id };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+    const payload = { ...user };
+    delete payload.password;
+    return this.jwtService.sign(payload);
   }
 }
