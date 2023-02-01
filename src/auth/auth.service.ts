@@ -21,7 +21,7 @@ export class AuthService {
     return existedUser;
   }
   async login(user: UserDBEntity) {
-    const payload = { id: user.id, username: user.username };
+    const payload = { id: user.id, username: user.username, role: user.roles };
     return this.jwtService.sign(payload);
   }
 

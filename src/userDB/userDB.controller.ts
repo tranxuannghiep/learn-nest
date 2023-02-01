@@ -11,8 +11,13 @@ import {
   Put,
   Query,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { Role } from 'src/utils/types';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDBService } from './userDB.service';
@@ -50,6 +55,8 @@ export class UserDBController {
   }
 
   @Delete(':id')
+  @Roles(Role.Customer)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   async deleteUserById(@Param('id') id: number) {
     await this.userDBService.deleteUserById(id);
     return { message: 'delete successfully' };
