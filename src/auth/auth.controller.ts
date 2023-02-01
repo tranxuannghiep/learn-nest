@@ -10,8 +10,8 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { LocalAuthGuard } from './local-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { LocalAuthGuard } from './guards/local-auth.guard';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('auth')
