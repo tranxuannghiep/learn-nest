@@ -22,10 +22,20 @@ export class UserDBService {
 
   getAll(paginationQuery: PaginationQueryDto) {
     const { limit = 10, page = 1 } = paginationQuery;
-    return this.userDBRepositoty.find({
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    return (
+      this.userDBRepositoty
+        // .createQueryBuilder()
+        // .skip((page - 1) * limit)
+        // .take(limit)
+        // .select(['id AS uid', 'firstname', 'lastname', 'isActive'])
+        // .getRawMany();
+
+        .find({
+          skip: (page - 1) * limit,
+          take: limit,
+          select: ['id', 'firstname', 'lastname', 'isActive'],
+        })
+    );
   }
 
   async getUserById(id: number) {
