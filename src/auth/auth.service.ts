@@ -18,12 +18,14 @@ export class AuthService {
     const isMatch = await comparePassword(password, existedUser.password);
     if (!isMatch) return null;
 
-    delete existedUser.password;
     return existedUser;
   }
   async login(user: UserDBEntity) {
-    const payload = { ...user };
-    delete payload.password;
+    const payload = { id: user.id, username: user.username };
     return this.jwtService.sign(payload);
+  }
+
+  async getProfile(username: string) {
+    return this.usersService.findOne(username);
   }
 }

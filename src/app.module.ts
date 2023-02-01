@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { PostModule } from './posts/post.module';
 import { StoreModule } from './store/store.module';
@@ -26,6 +25,5 @@ import { UserModule } from './users/user.module';
     }),
     UserDBModule,
   ],
-  controllers: [AppController],
 })
 export class AppModule {}
