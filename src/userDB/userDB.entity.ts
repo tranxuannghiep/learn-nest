@@ -1,5 +1,6 @@
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { BaseEntity } from 'src/common/mysql/base.entity';
+import { Role } from 'src/utils/types';
 import { Entity, Column } from 'typeorm';
 
 @Entity({
@@ -30,7 +31,7 @@ export class UserDBEntity extends BaseEntity<UserDBEntity> {
 
   @Column({
     type: 'enum',
-    enum: ['admin', 'customer'],
+    enum: Role,
     default: 'customer',
   })
   roles: string;

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { encodePassword } from 'src/utils/bcrypt';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -19,8 +20,12 @@ export class UserDBService {
     return this.userDBRepositoty.save(user);
   }
 
-  getAll() {
-    return this.userDBRepositoty.find();
+  getAll(paginationQuery: PaginationQueryDto) {
+    const { limit = 10, page = 1 } = paginationQuery;
+    return this.userDBRepositoty.find({
+      skip: (page - 1) * limit,
+      take: limit,
+    });
   }
 
   async getUserById(id: number) {
