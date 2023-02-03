@@ -5,7 +5,14 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
+import { Request } from 'express';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Role } from 'src/utils/types';
 import { BookService } from './book.service';
 import { CreateBookDto } from './dto/create-book.dto';
 
@@ -14,8 +21,11 @@ export class BookController {
   constructor(private readonly bookService: BookService) {}
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async createBook(@Body() bookDto: CreateBookDto) {
-    const book = await this.bookService.createBook(bookDto);
+  @Roles(Role.Seller)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async createBook(@Req() req: Request, @Body() bookDto: CreateBookDto) {
+    const { id } = req.user;
+    const book = await this.bookService.createBook(bookDto, id);
     return { data: book };
   }
 

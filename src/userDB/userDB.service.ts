@@ -41,7 +41,15 @@ export class UserDBService {
   async getUserById(id: number) {
     const user = await this.userDBRepositoty.find({
       where: { id },
-      relations: ['books'],
+      relations: {
+        books: true,
+      },
+      select: {
+        books: {
+          id: true,
+          title: true,
+        },
+      },
     });
     if (!user) throw new NotFoundException();
     return user;
