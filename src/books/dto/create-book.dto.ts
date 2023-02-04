@@ -15,4 +15,7 @@ export class CreateBookDto {
 
   @IsNotEmpty()
   readonly quantity: number;
+
+  @IsNotEmpty()
+  readonly categories: number[];
 }

@@ -1,6 +1,14 @@
+import { CategoryEntity } from 'src/categories/category.entity';
 import { BaseEntity } from 'src/common/mysql/base.entity';
 import { UserDBEntity } from 'src/userDB/userDB.entity';
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  ManyToMany,
+  JoinTable,
+} from 'typeorm';
 
 @Entity({
   name: 'book',
@@ -16,8 +24,18 @@ export class BookEntity extends BaseEntity<BookEntity> {
   @Column()
   description: string;
 
-  //   @Column()
-  //   categories: string;
+  @ManyToMany(() => CategoryEntity, (category) => category.books)
+  @JoinTable({
+    joinColumn: {
+      name: 'book_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'category_id',
+      referencedColumnName: 'id',
+    },
+  })
+  categories: CategoryEntity[];
 
   //   @Column()
   //   images: string[];
