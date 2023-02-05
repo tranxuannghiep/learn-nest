@@ -5,13 +5,6 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './middleware/http-exception.filter';
 
 async function bootstrap() {
-  // const app = await NestFactory.create<NestFastifyApplication>(
-  //   AppModule,
-  //   new FastifyAdapter(),
-  // );
-  // await app.register(fastifyCookie, {
-  //   secret: jwtConstants.secret, // for cookies signature
-  // });
   const app = await NestFactory.create(AppModule);
   app.use(cookieParser());
 
