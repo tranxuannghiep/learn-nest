@@ -7,6 +7,7 @@ import {
   Post,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -15,6 +16,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Role } from 'src/utils/types';
 import { BookService } from './book.service';
 import { CreateBookDto } from './dto/create-book.dto';
+import { BookQueryDto } from './dto/query-book.dto';
 
 @Controller('book')
 export class BookController {
@@ -30,7 +32,7 @@ export class BookController {
   }
 
   @Get('all')
-  async getAll() {
-    return this.bookService.getAll();
+  async getAll(@Query() bookQueryDto: BookQueryDto) {
+    return this.bookService.getAll(bookQueryDto);
   }
 }

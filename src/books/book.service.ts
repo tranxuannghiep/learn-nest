@@ -9,6 +9,7 @@ import { BookEntity } from './book.entity';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UserDBEntity } from 'src/userDB/userDB.entity';
 import { CategoryEntity } from 'src/categories/category.entity';
+import { BookQueryDto } from './dto/query-book.dto';
 
 @Injectable()
 export class BookService {
@@ -42,7 +43,8 @@ export class BookService {
     }
   }
 
-  async getAll() {
+  async getAll(bookQueryDto: BookQueryDto) {
+    const { limit = 10, page = 1, seller, categories } = bookQueryDto;
     return this.bookRepositoty.find({
       relations: {
         seller: true,
@@ -60,6 +62,16 @@ export class BookService {
           name: true,
         },
       },
+      where: {
+        seller: seller && {
+          id: seller,
+        },
+        categories: categories && {
+          id: In(categories),
+        },
+      },
+      skip: (page - 1) * limit,
+      take: limit,
     });
   }
 }
