@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CategoryEntity } from './category.entity';
@@ -12,8 +16,14 @@ export class CategoryService {
   ) {}
 
   async createCategory(createCategoryDto: CreateCategoryDto) {
-    const newCategory = this.categoryRepository.create(createCategoryDto);
-    return this.categoryRepository.save(newCategory);
+    try {
+      const newCategory = this.categoryRepository.create(createCategoryDto);
+      return await this.categoryRepository.save(newCategory);
+    } catch (error) {
+      if (error.errno === 1062)
+        throw new ConflictException('Category already exists');
+      else throw new InternalServerErrorException();
+    }
   }
 
   async getAll() {

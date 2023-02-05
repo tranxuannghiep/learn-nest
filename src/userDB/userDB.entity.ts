@@ -8,7 +8,7 @@ import { Entity, Column, OneToMany } from 'typeorm';
   name: 'user',
 })
 export class UserDBEntity extends BaseEntity<UserDBEntity> {
-  @Column()
+  @Column({ unique: true })
   username: string;
 
   @Exclude()

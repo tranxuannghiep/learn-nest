@@ -4,7 +4,7 @@ import { Column, Entity, ManyToMany } from 'typeorm';
 
 @Entity('category')
 export class CategoryEntity extends BaseEntity<CategoryEntity> {
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @ManyToMany(() => BookEntity, (book) => book.categories)

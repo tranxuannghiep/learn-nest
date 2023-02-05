@@ -18,7 +18,9 @@ export class BookEntity extends BaseEntity<BookEntity> {
   @JoinColumn({ name: 'seller_id' })
   seller: UserDBEntity;
 
-  @Column()
+  @Column({
+    unique: true,
+  })
   title: string;
 
   @Column()

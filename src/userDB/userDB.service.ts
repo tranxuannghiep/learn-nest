@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { encodePassword } from 'src/utils/bcrypt';
@@ -15,9 +20,18 @@ export class UserDBService {
   ) {}
 
   async createUser(userDBDto: CreateUserDto) {
-    const password = await encodePassword(userDBDto.password);
-    const user = await this.userDBRepositoty.create({ ...userDBDto, password });
-    return this.userDBRepositoty.save(user);
+    try {
+      const password = await encodePassword(userDBDto.password);
+      const user = await this.userDBRepositoty.create({
+        ...userDBDto,
+        password,
+      });
+      return await this.userDBRepositoty.save(user);
+    } catch (error) {
+      if (error.errno === 1062)
+        throw new ConflictException('Username already exists');
+      else throw new InternalServerErrorException();
+    }
   }
 
   getAll(paginationQuery: PaginationQueryDto) {
