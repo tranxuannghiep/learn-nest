@@ -8,7 +8,13 @@ import {
   UseGuards,
   Req,
   Query,
+  UploadedFile,
+  UseInterceptors,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
@@ -34,5 +40,26 @@ export class BookController {
   @Get('all')
   async getAll(@Query() bookQueryDto: BookQueryDto) {
     return this.bookService.getAll(bookQueryDto);
+  }
+
+  @Post('upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      dest: './uploads',
+    }),
+  )
+  async handleUpload(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 10000 }),
+          new FileTypeValidator({ fileType: 'image/jpeg' }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    console.log(file);
+    return file.buffer.toString();
   }
 }

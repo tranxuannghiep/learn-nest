@@ -5,8 +5,9 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './middleware/http-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { cors: true });
   app.use(cookieParser());
+  app.enableCors();
 
   app.useGlobalPipes(
     new ValidationPipe({
