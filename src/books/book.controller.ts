@@ -13,9 +13,12 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
+  Param,
+  StreamableFile,
+  Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -23,6 +26,11 @@ import { Role } from 'src/utils/types';
 import { BookService } from './book.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { BookQueryDto } from './dto/query-book.dto';
+import { diskStorage } from 'multer';
+import { createReadStream } from 'fs';
+import { join } from 'path';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const path = require('path');
 
 @Controller('book')
 export class BookController {
@@ -45,21 +53,46 @@ export class BookController {
   @Post('upload')
   @UseInterceptors(
     FileInterceptor('file', {
-      dest: './uploads',
+      storage: diskStorage({
+        destination: './uploads',
+        filename: function (req, file, cb) {
+          cb(
+            null,
+            file.fieldname + '-' + Date.now() + path.extname(file.originalname),
+          );
+        },
+      }),
     }),
   )
   async handleUpload(
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 10000 }),
-          new FileTypeValidator({ fileType: 'image/jpeg' }),
+          new MaxFileSizeValidator({ maxSize: 1000000 }),
+          new FileTypeValidator({ fileType: 'image' }),
         ],
+        fileIsRequired: true,
       }),
     )
     file: Express.Multer.File,
   ) {
-    console.log(file);
-    return file.buffer.toString();
+    return file;
+  }
+
+  @Get('upload/:filename')
+  getFile(
+    @Param('filename') filename: string,
+    @Res({ passthrough: true }) res: Response,
+  ): StreamableFile {
+    res.set({
+      'Content-Type': 'text/plain',
+    });
+    const file = createReadStream(join(process.cwd(), 'uploads', filename));
+    file.on('data', (chunk) => console.log(chunk));
+    file.on('end', () => console.log('done'));
+    file.on('error', (err) => {
+      console.error(err);
+    });
+    return new StreamableFile(file);
   }
 }
