@@ -16,6 +16,7 @@ import {
   Param,
   StreamableFile,
   Res,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
@@ -31,6 +32,8 @@ import { createReadStream } from 'fs';
 import { join } from 'path';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const path = require('path');
+
+const MB = 1e6;
 
 @Controller('book')
 export class BookController {
@@ -62,13 +65,23 @@ export class BookController {
           );
         },
       }),
+      fileFilter(req, file, cb) {
+        const allowExtensions = ['.jpg', '.png', '.gif', '.jpeg'];
+        const fileExtension = path.extname(file.originalname);
+        const regex = new RegExp(`(${allowExtensions.join('|')})$`, 'i');
+        if (regex.test(fileExtension)) {
+          cb(null, true);
+        } else {
+          cb(new BadRequestException(), false);
+        }
+      },
     }),
   )
   async handleUpload(
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 1000000 }),
+          new MaxFileSizeValidator({ maxSize: 1 * MB }),
           new FileTypeValidator({ fileType: 'image' }),
         ],
         fileIsRequired: true,
