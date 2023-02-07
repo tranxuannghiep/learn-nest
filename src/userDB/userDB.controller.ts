@@ -12,20 +12,32 @@ import {
   Query,
   UseInterceptors,
   UseGuards,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { S3Service } from 'src/aws-s3/s3.service';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { Role } from 'src/utils/types';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDBService } from './userDB.service';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const path = require('path');
+import { v4 as uuidv4 } from 'uuid';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('userDB')
 export class UserDBController {
-  constructor(private readonly userDBService: UserDBService) {}
+  constructor(
+    private readonly userDBService: UserDBService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -60,5 +72,27 @@ export class UserDBController {
   async deleteUserById(@Param('id') id: number) {
     await this.userDBService.deleteUserById(id);
     return { message: 'delete successfully' };
+  }
+
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('image'))
+  async uploadImage(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 1 * 1e6 }),
+          new FileTypeValidator({ fileType: 'image' }),
+        ],
+        fileIsRequired: true,
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    const key =
+      file.fieldname +
+      '-' +
+      uuidv4().slice(0, 10) +
+      path.extname(file.originalname);
+    return this.s3Service.uploadFile(file, key);
   }
 }
