@@ -37,9 +37,36 @@ export class S3Service {
     };
     try {
       const res = await this.s3.upload(params).promise();
-      return res.Location;
+      return res;
     } catch (error) {
       throw new BadRequestException();
+    }
+  }
+
+  async deleteFile(key: string) {
+    try {
+      const res = await this.s3
+        .deleteObject({
+          Bucket: this.publicBucketName,
+          Key: key,
+        })
+        .promise();
+      return res;
+    } catch (error) {
+      return error;
+    }
+  }
+
+  async getFiles() {
+    try {
+      const res = await this.s3
+        .listObjects({
+          Bucket: this.publicBucketName,
+        })
+        .promise();
+      return res;
+    } catch (error) {
+      return error;
     }
   }
 }

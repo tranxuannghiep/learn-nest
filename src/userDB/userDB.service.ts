@@ -3,9 +3,9 @@ import {
   NotFoundException,
   ConflictException,
   InternalServerErrorException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ManagedUpload } from 'aws-sdk/clients/s3';
 import { S3Service } from 'src/aws-s3/s3.service';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { encodePassword } from 'src/utils/bcrypt';
@@ -23,18 +23,24 @@ export class UserDBService {
   ) {}
 
   async createUser(userDBDto: CreateUserDto, file?: Express.Multer.File) {
+    let fileS3: ManagedUpload.SendData;
     try {
       const password = await encodePassword(userDBDto.password);
       const user = await this.userDBRepositoty.create({
         ...userDBDto,
         password,
       });
+
       if (file) {
-        const urlImage = await this.s3Service.uploadFile(file);
-        user.image = urlImage;
+        fileS3 = await this.s3Service.uploadFile(file);
+        user.image = fileS3.Location;
       }
-      return await this.userDBRepositoty.save(user);
+      return await this.userDBRepositoty.insert(user);
     } catch (error) {
+      if (fileS3 && fileS3.Key) {
+        await this.s3Service.deleteFile(fileS3.Key);
+      }
+
       if (error.errno === 1062)
         throw new ConflictException('Username already exists');
       else throw new InternalServerErrorException();
