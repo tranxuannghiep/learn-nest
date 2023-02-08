@@ -3,8 +3,10 @@ import {
   NotFoundException,
   ConflictException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { S3Service } from 'src/aws-s3/s3.service';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { encodePassword } from 'src/utils/bcrypt';
 import { Repository } from 'typeorm';
@@ -17,15 +19,20 @@ export class UserDBService {
   constructor(
     @InjectRepository(UserDBEntity)
     private readonly userDBRepositoty: Repository<UserDBEntity>,
+    private readonly s3Service: S3Service,
   ) {}
 
-  async createUser(userDBDto: CreateUserDto) {
+  async createUser(userDBDto: CreateUserDto, file?: Express.Multer.File) {
     try {
       const password = await encodePassword(userDBDto.password);
       const user = await this.userDBRepositoty.create({
         ...userDBDto,
         password,
       });
+      if (file) {
+        const urlImage = await this.s3Service.uploadFile(file);
+        user.image = urlImage;
+      }
       return await this.userDBRepositoty.save(user);
     } catch (error) {
       if (error.errno === 1062)

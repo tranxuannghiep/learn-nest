@@ -27,9 +27,6 @@ import { Role } from 'src/utils/types';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDBService } from './userDB.service';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const path = require('path');
-import { v4 as uuidv4 } from 'uuid';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('userDB')
@@ -41,8 +38,21 @@ export class UserDBController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async createUser(@Body() user: CreateUserDto) {
-    const userDB = await this.userDBService.createUser(user);
+  @UseInterceptors(FileInterceptor('image'))
+  async createUser(
+    @Body() user: CreateUserDto,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 1 * 1e6 }),
+          new FileTypeValidator({ fileType: 'image' }),
+        ],
+        fileIsRequired: false,
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    const userDB = await this.userDBService.createUser(user, file);
     return { data: userDB };
   }
 
@@ -88,11 +98,6 @@ export class UserDBController {
     )
     file: Express.Multer.File,
   ) {
-    const key =
-      file.fieldname +
-      '-' +
-      uuidv4().slice(0, 10) +
-      path.extname(file.originalname);
-    return this.s3Service.uploadFile(file, key);
+    return this.s3Service.uploadFile(file);
   }
 }

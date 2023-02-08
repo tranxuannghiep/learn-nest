@@ -39,4 +39,9 @@ export class UserDBEntity extends BaseEntity<UserDBEntity> {
 
   @OneToMany(() => BookEntity, (book) => book.seller)
   books: BookEntity[];
+
+  @Column({
+    nullable: true,
+  })
+  image: string;
 }

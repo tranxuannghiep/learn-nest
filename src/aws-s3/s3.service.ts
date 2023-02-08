@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { S3 } from 'aws-sdk';
-
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const path = require('path');
+import { v4 as uuidv4 } from 'uuid';
 @Injectable()
 export class S3Service {
   private readonly region;
@@ -20,7 +22,12 @@ export class S3Service {
     });
   }
 
-  async uploadFile(file: Express.Multer.File, key: string) {
+  async uploadFile(file: Express.Multer.File) {
+    const key =
+      file.fieldname +
+      '-' +
+      uuidv4().slice(0, 10) +
+      path.extname(file.originalname);
     const params = {
       Bucket: this.publicBucketName,
       Key: key,
@@ -32,7 +39,7 @@ export class S3Service {
       const res = await this.s3.upload(params).promise();
       return res.Location;
     } catch (error) {
-      console.log(error);
+      throw new BadRequestException();
     }
   }
 }
