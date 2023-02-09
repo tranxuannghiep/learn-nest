@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { S3Service } from 'src/aws-s3/s3.service';
 import { CategoryEntity } from 'src/categories/category.entity';
 import { UserDBEntity } from 'src/userDB/userDB.entity';
 import { BookController } from './book.controller';
@@ -10,7 +11,7 @@ import { BookService } from './book.service';
   imports: [
     TypeOrmModule.forFeature([BookEntity, UserDBEntity, CategoryEntity]),
   ],
-  providers: [BookService],
+  providers: [BookService, S3Service],
   controllers: [BookController],
 })
 export class BookModule {}

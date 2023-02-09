@@ -34,6 +34,7 @@ import {
   FileTypeValidator,
   MaxFileSizeValidator,
 } from 'src/utils/validator.image';
+import { UpdateBookDto } from './dto/update-book.dto';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const path = require('path');
 
@@ -113,23 +114,24 @@ export class BookController {
     return new StreamableFile(file);
   }
 
-  @Patch('upload')
-  // @Roles(Role.Seller)
-  // @UseGuards(JwtAuthGuard, RolesGuard)
-  @UseInterceptors(FilesInterceptor('images', 5))
+  @Patch(':id')
+  @Roles(Role.Seller)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseInterceptors(FilesInterceptor('file', 5))
   async uploadImage(
-    @Req() req: Request,
+    @Param('id') id: number,
+    @Body() updateBookDto: UpdateBookDto,
     @UploadedFiles(
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 1 * MB }),
           new FileTypeValidator({ fileType: 'image' }),
         ],
-        fileIsRequired: true,
+        fileIsRequired: false,
       }),
     )
-    files: Array<Express.Multer.File>,
+    files?: Array<Express.Multer.File>,
   ) {
-    return files;
+    return this.bookService.updateBook(id, updateBookDto, files);
   }
 }

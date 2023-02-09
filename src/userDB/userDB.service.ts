@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ManagedUpload } from 'aws-sdk/clients/s3';
 import { S3Service } from 'src/aws-s3/s3.service';
@@ -35,11 +30,12 @@ export class UserDBService {
       fileS3 = await this.s3Service.uploadFile(file);
       user.image = fileS3.Location;
     }
-    const res = await this.userDBRepositoty.insert(user);
-    if (fileS3 && fileS3.Key) {
-      await this.s3Service.deleteFile(fileS3.Key);
-    }
-    return res;
+    return await this.userDBRepositoty.insert(user).catch(async (error) => {
+      if (fileS3 && fileS3.Key) {
+        await this.s3Service.deleteFile(fileS3.Key);
+      }
+      throw error;
+    });
   }
 
   getAll(paginationQuery: PaginationQueryDto) {
