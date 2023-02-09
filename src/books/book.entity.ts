@@ -39,8 +39,8 @@ export class BookEntity extends BaseEntity<BookEntity> {
   })
   categories: CategoryEntity[];
 
-  //   @Column()
-  //   images: string[];
+  @Column('json', { nullable: true })
+  images?: string[];
 
   @Column()
   original_price: number;

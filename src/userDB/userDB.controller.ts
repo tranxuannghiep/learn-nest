@@ -16,6 +16,7 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
+  Patch,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -99,5 +100,23 @@ export class UserDBController {
     file: Express.Multer.File,
   ) {
     return this.s3Service.uploadFile(file);
+  }
+
+  @Patch('upload')
+  @UseInterceptors(FileInterceptor('image'))
+  async updateImage(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 1 * 1e6 }),
+          new FileTypeValidator({ fileType: 'image' }),
+        ],
+        fileIsRequired: true,
+      }),
+    )
+    file: Express.Multer.File,
+    @Body('key') key: string,
+  ) {
+    return this.s3Service.updateFile(key, file);
   }
 }

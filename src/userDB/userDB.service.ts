@@ -24,27 +24,22 @@ export class UserDBService {
 
   async createUser(userDBDto: CreateUserDto, file?: Express.Multer.File) {
     let fileS3: ManagedUpload.SendData;
-    try {
-      const password = await encodePassword(userDBDto.password);
-      const user = await this.userDBRepositoty.create({
-        ...userDBDto,
-        password,
-      });
 
-      if (file) {
-        fileS3 = await this.s3Service.uploadFile(file);
-        user.image = fileS3.Location;
-      }
-      return await this.userDBRepositoty.insert(user);
-    } catch (error) {
-      if (fileS3 && fileS3.Key) {
-        await this.s3Service.deleteFile(fileS3.Key);
-      }
+    const password = await encodePassword(userDBDto.password);
+    const user = await this.userDBRepositoty.create({
+      ...userDBDto,
+      password,
+    });
 
-      if (error.errno === 1062)
-        throw new ConflictException('Username already exists');
-      else throw new InternalServerErrorException();
+    if (file) {
+      fileS3 = await this.s3Service.uploadFile(file);
+      user.image = fileS3.Location;
     }
+    const res = await this.userDBRepositoty.insert(user);
+    if (fileS3 && fileS3.Key) {
+      await this.s3Service.deleteFile(fileS3.Key);
+    }
+    return res;
   }
 
   getAll(paginationQuery: PaginationQueryDto) {

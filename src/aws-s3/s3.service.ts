@@ -43,6 +43,24 @@ export class S3Service {
     }
   }
 
+  async updateFile(key: string, file: Express.Multer.File) {
+    try {
+      const res = await this.s3
+        .putObject({
+          Bucket: this.publicBucketName,
+          Key: key,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+          ACL: 'public-read',
+          CacheControl: 'no-cache',
+        })
+        .promise();
+      return res;
+    } catch (error) {
+      throw new BadRequestException();
+    }
+  }
+
   async deleteFile(key: string) {
     try {
       const res = await this.s3

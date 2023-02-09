@@ -16,14 +16,8 @@ export class CategoryService {
   ) {}
 
   async createCategory(createCategoryDto: CreateCategoryDto) {
-    try {
-      const newCategory = this.categoryRepository.create(createCategoryDto);
-      return await this.categoryRepository.save(newCategory);
-    } catch (error) {
-      if (error.errno === 1062)
-        throw new ConflictException('Category already exists');
-      else throw new InternalServerErrorException();
-    }
+    const newCategory = this.categoryRepository.create(createCategoryDto);
+    return await this.categoryRepository.save(newCategory);
   }
 
   async getAll() {

@@ -23,24 +23,18 @@ export class BookService {
   ) {}
 
   async createBook(bookDto: CreateBookDto, id: number) {
-    try {
-      const { categories, ...bookInputDetail } = bookDto;
+    const { categories, ...bookInputDetail } = bookDto;
 
-      const book = await this.bookRepositoty.create(bookInputDetail);
-      const user = await this.userRepository.findOneBy({ id });
+    const book = await this.bookRepositoty.create(bookInputDetail);
+    const user = await this.userRepository.findOneBy({ id });
 
-      const searchCategories = await this.categoryRepository.findBy({
-        id: In(categories),
-      });
-      book.seller = user;
-      book.categories = searchCategories;
-      return await this.bookRepositoty.save(book);
-      //insert not work
-    } catch (error) {
-      if (error.errno === 1062)
-        throw new ConflictException('Title already exists');
-      else throw new InternalServerErrorException();
-    }
+    const searchCategories = await this.categoryRepository.findBy({
+      id: In(categories),
+    });
+    book.seller = user;
+    book.categories = searchCategories;
+    return await this.bookRepositoty.save(book);
+    //insert not work
   }
 
   async getAll(bookQueryDto: BookQueryDto) {

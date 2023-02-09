@@ -11,14 +11,14 @@ import {
   UploadedFile,
   UseInterceptors,
   ParseFilePipe,
-  MaxFileSizeValidator,
-  FileTypeValidator,
   Param,
   StreamableFile,
   Res,
   BadRequestException,
+  Patch,
+  UploadedFiles,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
@@ -30,6 +30,10 @@ import { BookQueryDto } from './dto/query-book.dto';
 import { diskStorage } from 'multer';
 import { createReadStream } from 'fs';
 import { join } from 'path';
+import {
+  FileTypeValidator,
+  MaxFileSizeValidator,
+} from 'src/utils/validator.image';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const path = require('path');
 
@@ -107,5 +111,25 @@ export class BookController {
       console.error(err);
     });
     return new StreamableFile(file);
+  }
+
+  @Patch('upload')
+  // @Roles(Role.Seller)
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseInterceptors(FilesInterceptor('images', 5))
+  async uploadImage(
+    @Req() req: Request,
+    @UploadedFiles(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 1 * MB }),
+          new FileTypeValidator({ fileType: 'image' }),
+        ],
+        fileIsRequired: true,
+      }),
+    )
+    files: Array<Express.Multer.File>,
+  ) {
+    return files;
   }
 }
