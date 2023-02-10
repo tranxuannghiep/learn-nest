@@ -43,5 +43,5 @@ export class UserDBEntity extends BaseEntity<UserDBEntity> {
   @Column({
     nullable: true,
   })
-  image: string;
+  image?: string;
 }

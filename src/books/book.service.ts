@@ -79,7 +79,7 @@ export class BookService {
     const book = await this.bookRepositoty.findOneBy({ id });
     const currentBookImages = book.images ? [...book.images] : [];
 
-    let imagesUpdate = images
+    const imagesUpdate = images
       ? intersection(images, currentBookImages)
       : [...currentBookImages];
 

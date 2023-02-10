@@ -19,9 +19,8 @@ export class UserDBService {
 
   async createUser(userDBDto: CreateUserDto, file?: Express.Multer.File) {
     let fileS3: ManagedUpload.SendData;
-
     const password = await encodePassword(userDBDto.password);
-    const user = await this.userDBRepositoty.create({
+    const user = new UserDBEntity({
       ...userDBDto,
       password,
     });
@@ -30,7 +29,7 @@ export class UserDBService {
       fileS3 = await this.s3Service.uploadFile(file);
       user.image = fileS3.Location;
     }
-    return await this.userDBRepositoty.insert(user).catch(async (error) => {
+    return await this.userDBRepositoty.save(user).catch(async (error) => {
       if (fileS3 && fileS3.Key) {
         await this.s3Service.deleteFile(fileS3.Key);
       }
@@ -73,8 +72,33 @@ export class UserDBService {
     return user;
   }
 
-  updateUserById(id: number, dataUpdate: UpdateUserDto) {
-    return this.userDBRepositoty.update({ id }, dataUpdate);
+  async updateUserById(
+    id: number,
+    dataUpdate: UpdateUserDto,
+    file?: Express.Multer.File,
+  ) {
+    const user = await this.userDBRepositoty.findOneBy({ id });
+    const oldImage = user.image;
+
+    let fileS3: ManagedUpload.SendData;
+    if (file) {
+      fileS3 = await this.s3Service.uploadFile(file);
+      user.image = fileS3.Location;
+    }
+    return this.userDBRepositoty
+      .save({ ...user, ...dataUpdate })
+      .then(async (res) => {
+        if (oldImage) {
+          await this.s3Service.deleteFile(new URL(oldImage).pathname.slice(1));
+        }
+        return res;
+      })
+      .catch(async (error) => {
+        if (fileS3 && fileS3.Key) {
+          await this.s3Service.deleteFile(fileS3.Key);
+        }
+        throw error;
+      });
   }
 
   deleteUserById(id: number) {

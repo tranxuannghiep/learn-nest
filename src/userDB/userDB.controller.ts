@@ -17,8 +17,19 @@ import {
   MaxFileSizeValidator,
   FileTypeValidator,
   Patch,
+  Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiCookieAuth,
+  ApiCreatedResponse,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
+import { Request } from 'express';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -27,8 +38,11 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { Role } from 'src/utils/types';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserSwagger } from './swagger/create-user.dto';
+import { UpdateUserSwagger } from './swagger/update-user.swagger';
 import { UserDBService } from './userDB.service';
 
+@ApiTags('userDB')
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('userDB')
 export class UserDBController {
@@ -37,6 +51,13 @@ export class UserDBController {
     private readonly s3Service: S3Service,
   ) {}
 
+  @ApiCreatedResponse({
+    description: 'The record has been successfully created.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    type: CreateUserSwagger,
+  })
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(FileInterceptor('image'))
@@ -57,6 +78,8 @@ export class UserDBController {
     return { data: userDB };
   }
 
+  @ApiQuery({ name: 'limit', type: 'int', required: false })
+  @ApiQuery({ name: 'page', type: 'int', required: false })
   @Get()
   async getAll(@Query() paginationQuery: PaginationQueryDto) {
     const userList = await this.userDBService.getAll(paginationQuery);
@@ -69,16 +92,37 @@ export class UserDBController {
     return { data: user };
   }
 
-  @Put(':id')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    type: UpdateUserSwagger,
+  })
+  @ApiBearerAuth('Bearer Token')
+  @ApiCookieAuth('access_token')
+  @Put('profile')
+  @UseGuards(JwtAuthGuard)
   async updateUserById(
-    @Param('id') id: number,
+    @Req() req: Request,
     @Body() dataUpdate: UpdateUserDto,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 1 * 1e6 }),
+          new FileTypeValidator({ fileType: 'image' }),
+        ],
+        fileIsRequired: false,
+      }),
+    )
+    file: Express.Multer.File,
   ) {
-    return this.userDBService.updateUserById(id, dataUpdate);
+    const { id } = req.user;
+    return this.userDBService.updateUserById(id, dataUpdate, file);
   }
 
+  @ApiBearerAuth('Bearer Token')
+  @ApiCookieAuth('access_token')
+  @ApiTags('Admin')
   @Delete(':id')
-  @Roles(Role.Customer)
+  @Roles(Role.Admin)
   @UseGuards(JwtAuthGuard, RolesGuard)
   async deleteUserById(@Param('id') id: number) {
     await this.userDBService.deleteUserById(id);
