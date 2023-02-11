@@ -77,6 +77,9 @@ export class UserDBService {
     dataUpdate: UpdateUserDto,
     file?: Express.Multer.File,
   ) {
+    const { password } = dataUpdate;
+    if (password) dataUpdate.password = await encodePassword(password);
+
     const user = await this.userDBRepositoty.findOneBy({ id });
     const oldImage = user.image;
 

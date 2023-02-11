@@ -2,7 +2,7 @@ import { Exclude, Expose, Transform } from 'class-transformer';
 import { BookEntity } from 'src/books/book.entity';
 import { BaseEntity } from 'src/common/mysql/base.entity';
 import { Role } from 'src/utils/types';
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 
 @Entity({
   name: 'user',
@@ -33,7 +33,7 @@ export class UserDBEntity extends BaseEntity<UserDBEntity> {
   @Column({
     type: 'enum',
     enum: Role,
-    default: 'customer',
+    default: Role.Customer,
   })
   roles: string;
 

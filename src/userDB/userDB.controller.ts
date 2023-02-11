@@ -100,6 +100,7 @@ export class UserDBController {
   @ApiCookieAuth('access_token')
   @Put('profile')
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('image'))
   async updateUserById(
     @Req() req: Request,
     @Body() dataUpdate: UpdateUserDto,
