@@ -7,7 +7,7 @@ import { Column, Entity, OneToMany } from 'typeorm';
 @Entity({
   name: 'user',
 })
-export class UserDBEntity extends BaseEntity<UserDBEntity> {
+export class UserEntity extends BaseEntity<UserEntity> {
   @Column({ unique: true })
   username: string;
 

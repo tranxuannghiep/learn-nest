@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { UserDBService } from 'src/userDB/userDB.service';
+import { UserService } from 'src/users/user.service';
 import { comparePassword } from 'src/utils/bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { UserDBEntity } from 'src/userDB/userDB.entity';
+import { UserEntity } from 'src/users/user.entity';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UserDBService,
+    private usersService: UserService,
     private jwtService: JwtService,
   ) {}
 
@@ -20,7 +20,7 @@ export class AuthService {
 
     return existedUser;
   }
-  async login(user: UserDBEntity) {
+  async login(user: UserEntity) {
     const payload = { id: user.id, username: user.username, role: user.roles };
     return this.jwtService.sign(payload);
   }

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ManagedUpload } from 'aws-sdk/clients/s3';
 import { S3Service } from 'src/aws-s3/s3.service';
 import { CategoryEntity } from 'src/categories/category.entity';
-import { UserDBEntity } from 'src/userDB/userDB.entity';
+import { UserEntity } from 'src/users/user.entity';
 import { In, Repository } from 'typeorm';
 import { BookEntity } from './book.entity';
 import { CreateBookDto } from './dto/create-book.dto';
@@ -16,8 +16,8 @@ export class BookService {
   constructor(
     @InjectRepository(BookEntity)
     private readonly bookRepositoty: Repository<BookEntity>,
-    @InjectRepository(UserDBEntity)
-    private readonly userRepository: Repository<UserDBEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(CategoryEntity)
     private readonly categoryRepository: Repository<CategoryEntity>,
     private readonly s3Service: S3Service,

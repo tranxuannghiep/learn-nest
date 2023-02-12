@@ -1,23 +1,114 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
-import { SercurityService } from './sercurity.service';
-import { UserDto } from './user.dto';
-// import { UserReponsitory } from './user.repository';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ManagedUpload } from 'aws-sdk/clients/s3';
+import { S3Service } from 'src/aws-s3/s3.service';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { encodePassword } from 'src/utils/bcrypt';
+import { Repository } from 'typeorm';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserEntity } from './user.entity';
 
 @Injectable()
 export class UserService {
-  //   constructor(userReponsitory: UserReponsitory) {}
-
   constructor(
-    @Inject(forwardRef(() => SercurityService))
-    private readonly sercurityService: SercurityService,
+    @InjectRepository(UserEntity)
+    private readonly userRepositoty: Repository<UserEntity>,
+    private readonly s3Service: S3Service,
   ) {}
 
-  createUser(user: UserDto): UserDto {
-    user.id = 1;
-    user.createdAt = new Date();
-    user.updatedAt = new Date();
+  async createUser(UserDto: CreateUserDto, file?: Express.Multer.File) {
+    let fileS3: ManagedUpload.SendData;
+    const password = await encodePassword(UserDto.password);
+    const user = new UserEntity({
+      ...UserDto,
+      password,
+    });
 
-    const userReal = UserDto.plainToInstance(user);
-    return userReal;
+    if (file) {
+      fileS3 = await this.s3Service.uploadFile(file);
+      user.image = fileS3.Location;
+    }
+    return await this.userRepositoty.save(user).catch(async (error) => {
+      if (fileS3 && fileS3.Key) {
+        await this.s3Service.deleteFile(fileS3.Key);
+      }
+      throw error;
+    });
+  }
+
+  getAll(paginationQuery: PaginationQueryDto) {
+    const { limit = 10, page = 1 } = paginationQuery;
+    return (
+      this.userRepositoty
+        // .createQueryBuilder()
+        // .skip((page - 1) * limit)
+        // .take(limit)
+        // .select(['id AS uid', 'firstname', 'lastname', 'isActive'])
+        // .getRawMany();
+
+        .find({
+          skip: (page - 1) * limit,
+          take: limit,
+          select: ['id', 'firstname', 'lastname', 'isActive'],
+        })
+    );
+  }
+
+  async getUserById(id: number) {
+    const user = await this.userRepositoty.find({
+      where: { id },
+      relations: {
+        books: true,
+      },
+      select: {
+        books: {
+          id: true,
+          title: true,
+        },
+      },
+    });
+    if (!user) throw new NotFoundException();
+    return user;
+  }
+
+  async updateUserById(
+    id: number,
+    dataUpdate: UpdateUserDto,
+    file?: Express.Multer.File,
+  ) {
+    const { password } = dataUpdate;
+    if (password) dataUpdate.password = await encodePassword(password);
+
+    const user = await this.userRepositoty.findOneBy({ id });
+    const oldImage = user.image;
+
+    let fileS3: ManagedUpload.SendData;
+    if (file) {
+      fileS3 = await this.s3Service.uploadFile(file);
+      user.image = fileS3.Location;
+    }
+    return this.userRepositoty
+      .save({ ...user, ...dataUpdate })
+      .then(async (res) => {
+        if (oldImage) {
+          await this.s3Service.deleteFile(new URL(oldImage).pathname.slice(1));
+        }
+        return res;
+      })
+      .catch(async (error) => {
+        if (fileS3 && fileS3.Key) {
+          await this.s3Service.deleteFile(fileS3.Key);
+        }
+        throw error;
+      });
+  }
+
+  deleteUserById(id: number) {
+    return this.userRepositoty.delete({ id });
+  }
+
+  findOne(username: string) {
+    return this.userRepositoty.findOneBy({ username });
   }
 }

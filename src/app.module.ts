@@ -5,10 +5,7 @@ import { BookEntity } from './books/book.entity';
 import { BookModule } from './books/book.module';
 import { CategoryEntity } from './categories/category.entity';
 import { CategoryModule } from './categories/category.module';
-import { PostModule } from './posts/post.module';
-import { StoreModule } from './store/store.module';
-import { UserDBEntity } from './userDB/userDB.entity';
-import { UserDBModule } from './userDB/userDB.module';
+import { UserEntity } from './users/user.entity';
 import { UserModule } from './users/user.module';
 import { ConfigModule } from '@nestjs/config';
 
@@ -18,12 +15,9 @@ import { ConfigModule } from '@nestjs/config';
       isGlobal: true,
     }),
     UserModule,
-    PostModule,
-    UserDBModule,
     AuthModule,
     BookModule,
     CategoryModule,
-    StoreModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: process.env.DATABASE_HOST,
@@ -31,7 +25,7 @@ import { ConfigModule } from '@nestjs/config';
       username: process.env.DATABASE_USER,
       password: process.env.DATABASE_PASSWORD,
       database: process.env.DATABASE,
-      entities: [UserDBEntity, BookEntity, CategoryEntity],
+      entities: [UserEntity, BookEntity, CategoryEntity],
       synchronize: true,
     }),
   ],

@@ -13,7 +13,7 @@ import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { LoginUser } from 'src/userDB/dto/login-user.dto';
+import { LoginUser } from 'src/users/dto/login-user.dto';
 
 @ApiTags('Auth')
 @UseInterceptors(ClassSerializerInterceptor)

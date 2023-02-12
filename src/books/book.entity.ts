@@ -1,6 +1,6 @@
 import { CategoryEntity } from 'src/categories/category.entity';
 import { BaseEntity } from 'src/common/mysql/base.entity';
-import { UserDBEntity } from 'src/userDB/userDB.entity';
+import { UserEntity } from 'src/users/user.entity';
 import {
   Entity,
   Column,
@@ -14,9 +14,9 @@ import {
   name: 'book',
 })
 export class BookEntity extends BaseEntity<BookEntity> {
-  @ManyToOne(() => UserDBEntity, (user) => user.books, { onDelete: 'CASCADE' })
+  @ManyToOne(() => UserEntity, (user) => user.books, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'seller_id' })
-  seller: UserDBEntity;
+  seller: UserEntity;
 
   @Column({
     unique: true,
