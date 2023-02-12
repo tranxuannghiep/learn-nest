@@ -23,19 +23,35 @@ export class BookService {
     private readonly s3Service: S3Service,
   ) {}
 
-  async createBook(bookDto: CreateBookDto, id: number) {
+  async createBook(
+    bookDto: CreateBookDto,
+    id: number,
+    files?: Array<Express.Multer.File>,
+  ) {
     const { categories, ...bookInputDetail } = bookDto;
+    let newFiles: ManagedUpload.SendData[] = [];
+    const book = new BookEntity(bookInputDetail);
 
-    const book = await this.bookRepositoty.create(bookInputDetail);
+    if (files) {
+      newFiles = await Promise.all(
+        files.map((file) => this.s3Service.uploadFile(file)),
+      );
+      const listImage = newFiles.map((file) => file.Location);
+      book.images = [...listImage];
+    }
+
     const user = await this.userRepository.findOneBy({ id });
-
     const searchCategories = await this.categoryRepository.findBy({
       id: In(categories),
     });
     book.seller = user;
     book.categories = searchCategories;
-    return await this.bookRepositoty.save(book);
-    //insert not work
+    return await this.bookRepositoty.save(book).catch(async (error) => {
+      await Promise.all(
+        newFiles.map((file) => this.s3Service.deleteFile(file.Key)),
+      );
+      throw error;
+    });
   }
 
   async getAll(bookQueryDto: BookQueryDto) {

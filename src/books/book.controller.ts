@@ -35,21 +35,53 @@ import {
   MaxFileSizeValidator,
 } from 'src/utils/validator.image';
 import { UpdateBookDto } from './dto/update-book.dto';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiCookieAuth,
+  ApiTags,
+} from '@nestjs/swagger';
+import { CreateBookSwagger } from './swagger/create-book.swagger';
+import { UpdateBookSwagger } from './swagger/update-book.swagger';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const path = require('path');
 
 const MB = 1e6;
 
 @Controller('book')
+@ApiTags('Book')
 export class BookController {
   constructor(private readonly bookService: BookService) {}
+
+  @ApiTags('Seller')
+  @ApiBearerAuth('Bearer Token')
+  @ApiCookieAuth('access_token')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    type: CreateBookSwagger,
+  })
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @Roles(Role.Seller)
   @UseGuards(JwtAuthGuard, RolesGuard)
-  async createBook(@Req() req: Request, @Body() bookDto: CreateBookDto) {
+  @UseInterceptors(FilesInterceptor('file', 5))
+  async createBook(
+    @Req() req: Request,
+    @Body() bookDto: CreateBookDto,
+    @UploadedFiles(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 1 * MB }),
+          new FileTypeValidator({ fileType: 'image' }),
+        ],
+        fileIsRequired: false,
+      }),
+    )
+    files?: Array<Express.Multer.File>,
+  ) {
     const { id } = req.user;
-    const book = await this.bookService.createBook(bookDto, id);
+    const book = await this.bookService.createBook(bookDto, id, files);
     return { data: book };
   }
 
@@ -114,6 +146,13 @@ export class BookController {
     return new StreamableFile(file);
   }
 
+  @ApiTags('Seller')
+  @ApiBearerAuth('Bearer Token')
+  @ApiCookieAuth('access_token')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    type: UpdateBookSwagger,
+  })
   @Patch(':id')
   @Roles(Role.Seller)
   @UseGuards(JwtAuthGuard, RolesGuard)
