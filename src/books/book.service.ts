@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ManagedUpload } from 'aws-sdk/clients/s3';
 import { S3Service } from 'src/aws-s3/s3.service';
@@ -56,6 +56,7 @@ export class BookService {
 
   async getAll(bookQueryDto: BookQueryDto) {
     const { limit = 10, page = 1, seller, categories } = bookQueryDto;
+
     return this.bookRepositoty.find({
       relations: {
         seller: true,
@@ -93,6 +94,9 @@ export class BookService {
   ) {
     const { images, categories, ...bookUpdate } = updateBookDto;
     const book = await this.bookRepositoty.findOneBy({ id });
+    if (!book) {
+      throw new NotFoundException();
+    }
     const currentBookImages = book.images ? [...book.images] : [];
 
     const imagesUpdate = images
@@ -137,5 +141,21 @@ export class BookService {
         );
         throw error;
       });
+  }
+
+  async getBookDetail(id: number) {
+    const book = await this.bookRepositoty.findOne({
+      where: { id },
+      relations: { seller: true, categories: true },
+      select: {
+        seller: { id: true, firstname: true, lastname: true, username: true },
+        categories: {
+          id: true,
+          name: true,
+        },
+      },
+    });
+    if (!book) throw new NotFoundException();
+    return book;
   }
 }

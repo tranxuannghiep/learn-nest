@@ -1,40 +1,24 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
   HttpCode,
   HttpStatus,
-  Post,
-  UseGuards,
-  Req,
-  Query,
-  UploadedFile,
-  UseInterceptors,
-  ParseFilePipe,
   Param,
-  StreamableFile,
-  Res,
-  BadRequestException,
+  ParseFilePipe,
   Patch,
+  Post,
+  Query,
+  Req,
+  Res,
+  StreamableFile,
+  UploadedFile,
   UploadedFiles,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { Request, Response } from 'express';
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { Role } from 'src/utils/types';
-import { BookService } from './book.service';
-import { CreateBookDto } from './dto/create-book.dto';
-import { BookQueryDto } from './dto/query-book.dto';
-import { diskStorage } from 'multer';
-import { createReadStream } from 'fs';
-import { join } from 'path';
-import {
-  FileTypeValidator,
-  MaxFileSizeValidator,
-} from 'src/utils/validator.image';
-import { UpdateBookDto } from './dto/update-book.dto';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -42,6 +26,22 @@ import {
   ApiCookieAuth,
   ApiTags,
 } from '@nestjs/swagger';
+import { Request, Response } from 'express';
+import { createReadStream } from 'fs';
+import { diskStorage } from 'multer';
+import { join } from 'path';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Role } from 'src/utils/types';
+import {
+  FileTypeValidator,
+  MaxFileSizeValidator,
+} from 'src/utils/validator.image';
+import { BookService } from './book.service';
+import { CreateBookDto } from './dto/create-book.dto';
+import { BookQueryDto } from './dto/query-book.dto';
+import { UpdateBookDto } from './dto/update-book.dto';
 import { CreateBookSwagger } from './swagger/create-book.swagger';
 import { UpdateBookSwagger } from './swagger/update-book.swagger';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -157,7 +157,7 @@ export class BookController {
   @Roles(Role.Seller)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @UseInterceptors(FilesInterceptor('file', 5))
-  async uploadImage(
+  async updateBook(
     @Param('id') id: number,
     @Body() updateBookDto: UpdateBookDto,
     @UploadedFiles(
@@ -172,5 +172,10 @@ export class BookController {
     files?: Array<Express.Multer.File>,
   ) {
     return this.bookService.updateBook(id, updateBookDto, files);
+  }
+
+  @Get(':id')
+  async getBookDetail(@Param('id') id: number) {
+    return this.bookService.getBookDetail(id);
   }
 }
