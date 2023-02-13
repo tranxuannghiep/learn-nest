@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './user.entity';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class UserService {
@@ -15,14 +16,24 @@ export class UserService {
     @InjectRepository(UserEntity)
     private readonly userRepositoty: Repository<UserEntity>,
     private readonly s3Service: S3Service,
+    private readonly mailerService: MailerService,
   ) {}
 
-  async createUser(UserDto: CreateUserDto, file?: Express.Multer.File) {
+  async createUser(userDto: CreateUserDto, file?: Express.Multer.File) {
     let fileS3: ManagedUpload.SendData;
-    const password = await encodePassword(UserDto.password);
+    const password = await encodePassword(userDto.password);
     const user = new UserEntity({
-      ...UserDto,
+      ...userDto,
       password,
+    });
+
+    await this.mailerService.sendMail({
+      to: userDto.username,
+      subject: 'Welcome to my website',
+      template: './welcome',
+      context: {
+        name: userDto.firstname + ' ' + userDto.lastname,
+      },
     });
 
     if (file) {
