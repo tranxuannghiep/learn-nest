@@ -11,7 +11,9 @@ import { ConfigModule } from '@nestjs/config';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
-console.log(join(__dirname, 'src/templates/email'));
+import { OrderModule } from './orders/order.module';
+import { OrderEntity } from './orders/order.entity';
+import { OrderBookEntity } from './orders/order-book.entity';
 
 @Module({
   imports: [
@@ -22,6 +24,7 @@ console.log(join(__dirname, 'src/templates/email'));
     AuthModule,
     BookModule,
     CategoryModule,
+    OrderModule,
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: process.env.DATABASE_HOST,
@@ -29,7 +32,13 @@ console.log(join(__dirname, 'src/templates/email'));
       username: process.env.DATABASE_USER,
       password: process.env.DATABASE_PASSWORD,
       database: process.env.DATABASE,
-      entities: [UserEntity, BookEntity, CategoryEntity],
+      entities: [
+        UserEntity,
+        BookEntity,
+        CategoryEntity,
+        OrderEntity,
+        OrderBookEntity,
+      ],
       synchronize: true,
     }),
     MailerModule.forRootAsync({

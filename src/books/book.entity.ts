@@ -1,5 +1,6 @@
 import { CategoryEntity } from 'src/categories/category.entity';
 import { BaseEntity } from 'src/common/mysql/base.entity';
+import { OrderEntity } from 'src/orders/order.entity';
 import { UserEntity } from 'src/users/user.entity';
 import {
   Entity,
@@ -51,6 +52,9 @@ export class BookEntity extends BaseEntity<BookEntity> {
   @Column()
   quantity: number;
 
-  //   @Column()
-  //   quantity_sold: number;
+  @Column()
+  quantity_sold: number;
+
+  @ManyToMany(() => OrderEntity, (order) => order.books)
+  orders: OrderEntity[];
 }
