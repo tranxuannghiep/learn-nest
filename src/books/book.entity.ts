@@ -1,6 +1,6 @@
 import { CategoryEntity } from 'src/categories/category.entity';
 import { BaseEntity } from 'src/common/mysql/base.entity';
-import { OrderEntity } from 'src/orders/order.entity';
+import { OrderDetailEntity } from 'src/orders/order-detail.entity';
 import { UserEntity } from 'src/users/user.entity';
 import {
   Entity,
@@ -9,6 +9,7 @@ import {
   JoinColumn,
   ManyToMany,
   JoinTable,
+  OneToMany,
 } from 'typeorm';
 
 @Entity({
@@ -55,6 +56,6 @@ export class BookEntity extends BaseEntity<BookEntity> {
   @Column()
   quantity_sold: number;
 
-  @ManyToMany(() => OrderEntity, (order) => order.books)
-  orders: OrderEntity[];
+  @OneToMany(() => OrderDetailEntity, (orderDetail) => orderDetail.book)
+  orderDetails: OrderDetailEntity[];
 }

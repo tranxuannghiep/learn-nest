@@ -13,7 +13,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 import { join } from 'path';
 import { OrderModule } from './orders/order.module';
 import { OrderEntity } from './orders/order.entity';
-import { OrderBookEntity } from './orders/order-book.entity';
+import { OrderDetailEntity } from './orders/order-detail.entity';
 
 @Module({
   imports: [
@@ -37,7 +37,7 @@ import { OrderBookEntity } from './orders/order-book.entity';
         BookEntity,
         CategoryEntity,
         OrderEntity,
-        OrderBookEntity,
+        OrderDetailEntity,
       ],
       synchronize: true,
     }),

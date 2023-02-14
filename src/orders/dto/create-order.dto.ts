@@ -1,11 +1,4 @@
-import { Type } from 'class-transformer';
-import {
-  IsInt,
-  IsNotEmpty,
-  IsNumberString,
-  IsPositive,
-  IsString,
-} from 'class-validator';
+import { IsNotEmpty, IsNumberString, IsString } from 'class-validator';
 
 export class CreateOrderDto {
   @IsNotEmpty()
@@ -20,15 +13,11 @@ export class CreateOrderDto {
   @IsNotEmpty()
   phone: number;
 
-  @Type(() => Number)
   @IsNotEmpty()
-  @IsPositive({ each: true })
-  @IsInt({ each: true })
-  books: number[];
+  items: Item[];
+}
 
-  @Type(() => Number)
-  @IsNotEmpty()
-  @IsPositive()
-  @IsInt()
+interface Item {
+  id: number;
   amount: number;
 }

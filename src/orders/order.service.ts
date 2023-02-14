@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BookEntity } from 'src/books/book.entity';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { OrderBookEntity } from './order-book.entity';
+import { OrderDetailEntity } from './order-detail.entity';
 import { OrderEntity } from './order.entity';
 
 @Injectable()
@@ -13,14 +13,59 @@ export class OrderService {
     private readonly orderRepository: Repository<OrderEntity>,
     @InjectRepository(BookEntity)
     private readonly bookRepository: Repository<BookEntity>,
-    @InjectRepository(OrderBookEntity)
-    private readonly orderBookRepository: Repository<OrderBookEntity>,
+    @InjectRepository(OrderDetailEntity)
+    private readonly orderDetailRepository: Repository<OrderDetailEntity>,
   ) {}
+
   async createOrder(createOrder: CreateOrderDto) {
-    const { books, amount, ...order } = createOrder;
+    const { items, ...order } = createOrder;
     const newOrder = new OrderEntity(order);
-    const listBookEntity = await this.bookRepository.findBy({ id: In(books) });
-    newOrder.books = listBookEntity;
-    console.log(createOrder);
+    return await this.orderRepository.save(newOrder).then(async (res) => {
+      items.forEach(async (item) => {
+        const book = await this.bookRepository.findOneBy({ id: item.id });
+        if (book) {
+          await this.orderDetailRepository.insert({
+            amount: item.amount,
+            book: book,
+            order: res,
+          });
+        }
+      });
+      return res;
+    });
+  }
+
+  async getAll() {
+    return this.orderRepository.find({
+      relations: {
+        orderDetails: {
+          book: {
+            seller: true,
+            categories: true,
+          },
+        },
+      },
+      select: {
+        orderDetails: {
+          amount: true,
+          book: {
+            id: true,
+            title: true,
+            price: true,
+            original_price: true,
+            images: true,
+            seller: {
+              id: true,
+              firstname: true,
+              lastname: true,
+            },
+            categories: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+    });
   }
 }
