@@ -39,6 +39,28 @@ export class OrderService {
     return this.orderRepository.find({
       relations: {
         orderDetails: {
+          book: true,
+        },
+      },
+      select: {
+        orderDetails: {
+          amount: true,
+          id: true,
+          book: {
+            id: true,
+            original_price: true,
+            images: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getOrderById(id: number) {
+    return await this.orderRepository.findOne({
+      where: { id: id },
+      relations: {
+        orderDetails: {
           book: {
             seller: true,
             categories: true,
@@ -48,6 +70,7 @@ export class OrderService {
       select: {
         orderDetails: {
           amount: true,
+          id: true,
           book: {
             id: true,
             title: true,
