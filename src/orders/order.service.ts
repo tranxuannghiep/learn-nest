@@ -91,4 +91,27 @@ export class OrderService {
       },
     });
   }
+
+  async getOrderByStore(id: number) {
+    return this.orderDetailRepository.find({
+      where: {
+        book: {
+          seller: {
+            id,
+          },
+        },
+      },
+      relations: {
+        book: true,
+      },
+      select: {
+        book: {
+          id: true,
+          price: true,
+          images: true,
+          original_price: true,
+        },
+      },
+    });
+  }
 }

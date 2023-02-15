@@ -20,4 +20,9 @@ export class OrderController {
   async getOrderById(@Param('id') id: number) {
     return this.orderService.getOrderById(id);
   }
+
+  @Get('store/:id')
+  async getOrderByStore(@Param('id') id: number) {
+    return this.orderService.getOrderByStore(id);
+  }
 }
