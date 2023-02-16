@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BookEntity } from 'src/books/book.entity';
+import { UserEntity } from 'src/users/user.entity';
 import { Repository } from 'typeorm';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderDetailEntity } from './order-detail.entity';
@@ -15,11 +16,16 @@ export class OrderService {
     private readonly bookRepository: Repository<BookEntity>,
     @InjectRepository(OrderDetailEntity)
     private readonly orderDetailRepository: Repository<OrderDetailEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
   ) {}
 
-  async createOrder(createOrder: CreateOrderDto) {
+  async createOrder(id: number, createOrder: CreateOrderDto) {
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) throw new NotFoundException();
     const { items, ...order } = createOrder;
     const newOrder = new OrderEntity(order);
+    newOrder.user = user;
     return await this.orderRepository.save(newOrder).then(async (res) => {
       items.forEach(async (item) => {
         const book = await this.bookRepository.findOneBy({ id: item.id });
@@ -41,6 +47,7 @@ export class OrderService {
         orderDetails: {
           book: true,
         },
+        user: true,
       },
       select: {
         orderDetails: {
@@ -51,6 +58,11 @@ export class OrderService {
             original_price: true,
             images: true,
           },
+        },
+        user: {
+          id: true,
+          firstname: true,
+          lastname: true,
         },
       },
     });
@@ -66,6 +78,7 @@ export class OrderService {
             categories: true,
           },
         },
+        user: true,
       },
       select: {
         orderDetails: {
@@ -87,6 +100,11 @@ export class OrderService {
               name: true,
             },
           },
+        },
+        user: {
+          id: true,
+          firstname: true,
+          lastname: true,
         },
       },
     });

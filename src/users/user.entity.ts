@@ -1,6 +1,7 @@
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { BookEntity } from 'src/books/book.entity';
 import { BaseEntity } from 'src/common/mysql/base.entity';
+import { OrderEntity } from 'src/orders/order.entity';
 import { Role } from 'src/utils/types';
 import { Column, Entity, OneToMany } from 'typeorm';
 
@@ -39,6 +40,9 @@ export class UserEntity extends BaseEntity<UserEntity> {
 
   @OneToMany(() => BookEntity, (book) => book.seller)
   books: BookEntity[];
+
+  @OneToMany(() => OrderEntity, (order) => order.user)
+  orders: OrderEntity[];
 
   @Column({
     nullable: true,

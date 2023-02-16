@@ -1,4 +1,14 @@
-import { Body, Controller, Post, Get, Param } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Get,
+  Param,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
+import { Request } from 'express';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderService } from './order.service';
 
@@ -7,8 +17,10 @@ export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post()
-  async createOrder(@Body() createOrder: CreateOrderDto) {
-    return this.orderService.createOrder(createOrder);
+  @UseGuards(JwtAuthGuard)
+  async createOrder(@Req() req: Request, @Body() createOrder: CreateOrderDto) {
+    const { id } = req.user;
+    return this.orderService.createOrder(id, createOrder);
   }
 
   @Get('/all')
