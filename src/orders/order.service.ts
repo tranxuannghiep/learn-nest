@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BookEntity } from 'src/books/book.entity';
 import { UserEntity } from 'src/users/user.entity';
@@ -12,8 +16,6 @@ export class OrderService {
   constructor(
     @InjectRepository(OrderEntity)
     private readonly orderRepository: Repository<OrderEntity>,
-    @InjectRepository(BookEntity)
-    private readonly bookRepository: Repository<BookEntity>,
     @InjectRepository(OrderDetailEntity)
     private readonly orderDetailRepository: Repository<OrderDetailEntity>,
     @InjectRepository(UserEntity)
@@ -26,18 +28,44 @@ export class OrderService {
     const { items, ...order } = createOrder;
     const newOrder = new OrderEntity(order);
     newOrder.user = user;
-    return await this.orderRepository.save(newOrder).then(async (res) => {
-      items.forEach(async (item) => {
-        const book = await this.bookRepository.findOneBy({ id: item.id });
-        if (book) {
-          await this.orderDetailRepository.insert({
+    return await this.orderRepository.manager.transaction(async (manager) => {
+      const queryRunner = manager.queryRunner;
+      await queryRunner.startTransaction();
+      try {
+        const orderManager = await manager.save(newOrder);
+        for (const item of items) {
+          const bookUpdate = await manager.findOne(BookEntity, {
+            where: { id: item.id },
+            lock: { mode: 'pessimistic_write' },
+          });
+
+          if (!bookUpdate) {
+            throw new NotFoundException(`Product with id ${item.id} not found`);
+          }
+
+          if (bookUpdate.quantity < item.amount) {
+            throw new BadRequestException(
+              `Insufficient quantity for product with id ${item.id}`,
+            );
+          }
+
+          bookUpdate.quantity -= item.amount;
+          bookUpdate.quantity_sold += item.amount;
+          await manager.save(bookUpdate);
+
+          await manager.insert(OrderDetailEntity, {
             amount: item.amount,
-            book: book,
-            order: res,
+            book: bookUpdate,
+            order: orderManager,
           });
         }
-      });
-      return res;
+
+        await queryRunner.commitTransaction();
+        return orderManager;
+      } catch (error) {
+        await queryRunner.rollbackTransaction();
+        throw error;
+      }
     });
   }
 
