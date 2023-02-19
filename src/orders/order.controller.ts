@@ -28,6 +28,13 @@ export class OrderController {
     return this.orderService.getAll();
   }
 
+  @Get('/customer')
+  @UseGuards(JwtAuthGuard)
+  async getOrder(@Req() req: Request) {
+    const { id } = req.user;
+    return this.orderService.getOrderByCustomer(id);
+  }
+
   @Get(':id')
   async getOrderById(@Param('id') id: number) {
     return this.orderService.getOrderById(id);

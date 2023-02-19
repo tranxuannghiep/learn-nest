@@ -160,4 +160,14 @@ export class OrderService {
       },
     });
   }
+
+  async getOrderByCustomer(id: number) {
+    const orders = await this.orderRepository
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.user', 'user')
+      .where('user.id = :id', { id })
+      .orderBy('order.createdAt', 'DESC')
+      .getMany();
+    return orders;
+  }
 }

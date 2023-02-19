@@ -121,15 +121,6 @@ export class UserController {
 
   @ApiBearerAuth('Bearer Token')
   @ApiCookieAuth('access_token')
-  @Post('/orderAll')
-  @UseGuards(JwtAuthGuard)
-  async getOrder(@Req() req: Request) {
-    const { id } = req.user;
-    return this.userService.order(id);
-  }
-
-  @ApiBearerAuth('Bearer Token')
-  @ApiCookieAuth('access_token')
   @ApiTags('Admin')
   @Delete(':id')
   @Roles(Role.Admin)

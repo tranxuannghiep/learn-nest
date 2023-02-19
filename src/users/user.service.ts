@@ -122,18 +122,4 @@ export class UserService {
   findOne(username: string) {
     return this.userRepositoty.findOneBy({ username });
   }
-
-  async order(id: number) {
-    return await this.userRepositoty.find({
-      where: {
-        id,
-      },
-      relations: {
-        orders: true,
-      },
-      select: {
-        orders: true,
-      },
-    });
-  }
 }
