@@ -2,10 +2,12 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BookEntity } from 'src/books/book.entity';
 import { UserEntity } from 'src/users/user.entity';
+import Stripe from 'stripe';
 import { Repository } from 'typeorm';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderDetailEntity } from './order-detail.entity';
@@ -20,6 +22,7 @@ export class OrderService {
     private readonly orderDetailRepository: Repository<OrderDetailEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @Inject('STRIPE') private readonly stripe: Stripe,
   ) {}
 
   async createOrder(id: number, createOrder: CreateOrderDto) {
@@ -67,6 +70,39 @@ export class OrderService {
         throw error;
       }
     });
+  }
+
+  async createCheckoutSession() {
+    const session = await this.stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'T-Shirt',
+            },
+            unit_amount: 2000,
+          },
+          quantity: 1,
+        },
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'Jeans',
+            },
+            unit_amount: 1000,
+          },
+          quantity: 2,
+        },
+      ],
+      mode: 'payment',
+      success_url: 'https://example.com/success',
+      cancel_url: 'https://example.com/cancel',
+    });
+
+    return session.url;
   }
 
   async getAll() {
