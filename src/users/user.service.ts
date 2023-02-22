@@ -21,11 +21,7 @@ export class UserService {
 
   async createUser(userDto: CreateUserDto, file?: Express.Multer.File) {
     let fileS3: ManagedUpload.SendData;
-    const password = await encodePassword(userDto.password);
-    const user = new UserEntity({
-      ...userDto,
-      password,
-    });
+    const user = new UserEntity(userDto);
 
     await this.mailerService.sendMail({
       to: userDto.username,
@@ -88,9 +84,6 @@ export class UserService {
     dataUpdate: UpdateUserDto,
     file?: Express.Multer.File,
   ) {
-    const { password } = dataUpdate;
-    if (password) dataUpdate.password = await encodePassword(password);
-
     const user = await this.userRepositoty.findOneBy({ id });
     const oldImage = user.image;
 
