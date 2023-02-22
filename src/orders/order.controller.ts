@@ -44,9 +44,4 @@ export class OrderController {
   async getOrderByStore(@Param('id') id: number) {
     return this.orderService.getOrderByStore(id);
   }
-
-  @Post('/payment')
-  async payment() {
-    return this.orderService.createCheckoutSession();
-  }
 }

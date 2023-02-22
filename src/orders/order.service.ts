@@ -34,8 +34,11 @@ export class OrderService {
     return await this.orderRepository.manager.transaction(async (manager) => {
       const queryRunner = manager.queryRunner;
       await queryRunner.startTransaction();
+
       try {
         const orderManager = await manager.save(newOrder);
+        const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
+
         for (const item of items) {
           const bookUpdate = await manager.findOne(BookEntity, {
             where: { id: item.id },
@@ -61,10 +64,21 @@ export class OrderService {
             book: bookUpdate,
             order: orderManager,
           });
+          lineItems.push({
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: bookUpdate.title,
+              },
+              unit_amount: bookUpdate.price,
+            },
+            quantity: item.amount,
+          });
         }
 
+        const res = await this.createCheckoutSession(lineItems);
         await queryRunner.commitTransaction();
-        return orderManager;
+        return res;
       } catch (error) {
         await queryRunner.rollbackTransaction();
         throw error;
@@ -72,31 +86,12 @@ export class OrderService {
     });
   }
 
-  async createCheckoutSession() {
+  async createCheckoutSession(
+    lineItems: Stripe.Checkout.SessionCreateParams.LineItem[],
+  ) {
     const session = await this.stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: 'T-Shirt',
-            },
-            unit_amount: 2000,
-          },
-          quantity: 1,
-        },
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: 'Jeans',
-            },
-            unit_amount: 1000,
-          },
-          quantity: 2,
-        },
-      ],
+      line_items: lineItems,
       mode: 'payment',
       success_url: 'https://example.com/success',
       cancel_url: 'https://example.com/cancel',
