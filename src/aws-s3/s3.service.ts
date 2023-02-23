@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { S3 } from 'aws-sdk';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const path = require('path');
@@ -10,11 +11,11 @@ export class S3Service {
   private readonly secretAccessKey;
   private readonly publicBucketName;
   private s3: S3;
-  constructor() {
-    this.region = process.env.AWS_REGION;
-    this.accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-    this.secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-    this.publicBucketName = process.env.AWS_PUBLIC_BUCKET_NAME;
+  constructor(private configService: ConfigService) {
+    this.region = configService.get('aws.region');
+    this.accessKeyId = configService.get('aws.accessKeyId');
+    this.secretAccessKey = configService.get('aws.secretAccessKey');
+    this.publicBucketName = configService.get('aws.bucketName');
     this.s3 = new S3({
       region: this.region,
       accessKeyId: this.accessKeyId,

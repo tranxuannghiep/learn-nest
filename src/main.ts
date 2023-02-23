@@ -8,10 +8,11 @@ import {
   DocumentBuilder,
   SwaggerDocumentOptions,
 } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
-
+  const configService = app.get(ConfigService);
   const config = new DocumentBuilder()
     .setTitle('Lean nest')
     .setDescription('The nestjs API description')
@@ -37,8 +38,8 @@ async function bootstrap() {
     }),
   );
   app.useGlobalFilters(new GlobalExceptionFilter());
-  await app.listen(process.env.PORT, () => {
-    console.log('Server running on port 5000');
+  await app.listen(configService.get('port'), () => {
+    console.log(`Server running on port ${configService.get('port')}`);
   });
 }
 bootstrap();
