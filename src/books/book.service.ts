@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  CACHE_MANAGER,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ManagedUpload } from 'aws-sdk/clients/s3';
 import { S3Service } from 'src/aws-s3/s3.service';
@@ -10,6 +15,7 @@ import { CreateBookDto } from './dto/create-book.dto';
 import { BookQueryDto } from './dto/query-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
 import { difference, intersection } from 'lodash';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class BookService {
@@ -21,6 +27,7 @@ export class BookService {
     @InjectRepository(CategoryEntity)
     private readonly categoryRepository: Repository<CategoryEntity>,
     private readonly s3Service: S3Service,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
   async createBook(
@@ -57,7 +64,10 @@ export class BookService {
   async getAll(bookQueryDto: BookQueryDto) {
     const { limit = 10, page = 1, seller, categories } = bookQueryDto;
 
-    return this.bookRepositoty.find({
+    const cachedResult = await this.cacheManager.get('books');
+    if (cachedResult) return cachedResult;
+
+    const res = await this.bookRepositoty.find({
       relations: {
         seller: true,
         categories: true,
@@ -85,6 +95,9 @@ export class BookService {
       skip: (page - 1) * limit,
       take: limit,
     });
+
+    await this.cacheManager.set('books', res);
+    return res;
   }
 
   async updateBook(

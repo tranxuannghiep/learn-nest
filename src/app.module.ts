@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, CacheModule } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { BookEntity } from './books/book.entity';
@@ -15,6 +15,7 @@ import { OrderModule } from './orders/order.module';
 import { OrderEntity } from './orders/order.entity';
 import { OrderDetailEntity } from './orders/order-detail.entity';
 import appConfig from './config/app.config';
+import * as redisStore from 'cache-manager-redis-store';
 
 @Module({
   imports: [
@@ -68,6 +69,16 @@ import appConfig from './config/app.config';
             strict: true,
           },
         },
+      }),
+    }),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        store: redisStore,
+        host: configService.get('redis.host'),
+        port: configService.get('redis.port'),
+        ttl: 10,
       }),
     }),
   ],
