@@ -4,11 +4,19 @@ import { S3Module } from 'src/aws-s3/s3.module';
 import { UserController } from './user.controller';
 import { UserEntity } from './user.entity';
 import { UserService } from './user.service';
+import { BullModule } from '@nestjs/bull';
+import { EmailConsumer } from './consumers/email.consumer';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity]), S3Module],
+  imports: [
+    TypeOrmModule.forFeature([UserEntity]),
+    S3Module,
+    BullModule.registerQueue({
+      name: 'send-mail',
+    }),
+  ],
   controllers: [UserController],
-  providers: [UserService],
+  providers: [UserService, EmailConsumer],
   exports: [UserService],
 })
 export class UserModule {}

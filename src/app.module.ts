@@ -16,6 +16,7 @@ import { OrderEntity } from './orders/order.entity';
 import { OrderDetailEntity } from './orders/order-detail.entity';
 import appConfig from './config/app.config';
 import * as redisStore from 'cache-manager-redis-store';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
@@ -78,7 +79,16 @@ import * as redisStore from 'cache-manager-redis-store';
         store: redisStore,
         host: configService.get('redis.host'),
         port: configService.get('redis.port'),
-        ttl: 10,
+        ttl: 60 * 10,
+      }),
+    }),
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        redis: {
+          host: configService.get('redis.host'),
+          port: configService.get('redis.port'),
+        },
       }),
     }),
   ],
