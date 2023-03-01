@@ -17,6 +17,7 @@ import { OrderDetailEntity } from './orders/order-detail.entity';
 import appConfig from './config/app.config';
 import * as redisStore from 'cache-manager-redis-store';
 import { BullModule } from '@nestjs/bull';
+import { SocketModule } from './socket/socket.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { BullModule } from '@nestjs/bull';
     BookModule,
     CategoryModule,
     OrderModule,
+    SocketModule,
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({

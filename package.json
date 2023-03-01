@@ -31,8 +31,10 @@
     "@nestjs/passport": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
     "@nestjs/platform-fastify": "^9.2.1",
+    "@nestjs/platform-socket.io": "^9.1.6",
     "@nestjs/swagger": "^6.2.1",
     "@nestjs/typeorm": "^9.0.1",
+    "@nestjs/websockets": "^9.1.6",
     "@types/aws-sdk": "^2.7.0",
     "aws-sdk": "^2.1310.0",
     "bcrypt": "^5.1.0",
@@ -51,6 +53,7 @@
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
+    "socket.io": "^4.6.1",
     "stripe": "^11.11.0",
     "typeorm": "^0.3.11"
   },

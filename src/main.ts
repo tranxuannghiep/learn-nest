@@ -9,6 +9,7 @@ import {
   SwaggerDocumentOptions,
 } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
@@ -29,6 +30,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config, options);
   SwaggerModule.setup('api', app, document);
 
+  app.useWebSocketAdapter(new IoAdapter(app));
   app.use(cookieParser());
   app.enableCors();
 
