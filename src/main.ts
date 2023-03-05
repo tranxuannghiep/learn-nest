@@ -40,7 +40,7 @@ async function bootstrap() {
     }),
   );
   app.useGlobalFilters(new GlobalExceptionFilter());
-  await app.listen(configService.get('port'), () => {
+  await app.listen(configService.get('port'), '0.0.0.0', () => {
     console.log(`Server running on port ${configService.get('port')}`);
   });
 }

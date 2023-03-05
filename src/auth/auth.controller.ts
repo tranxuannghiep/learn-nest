@@ -31,6 +31,7 @@ export class AuthController {
     res.cookie('access_token', access_token, { httpOnly: true });
     return {
       access_token,
+      id: req.user.id,
     };
   }
 
