@@ -21,6 +21,7 @@ import { SocketModule } from './socket/socket.module';
 import { JoinedRoomEntity } from './socket/joined-room/joined-room.entity';
 import { RoomEntity } from './socket/rooms/room.entity';
 import { MessageEntity } from './socket/messages/message.entity';
+import { RoomModule } from './socket/rooms/room.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { MessageEntity } from './socket/messages/message.entity';
     CategoryModule,
     OrderModule,
     SocketModule,
+    RoomModule,
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
