@@ -4,6 +4,7 @@ import { BaseEntity } from 'src/common/mysql/base.entity';
 import { OrderEntity } from 'src/orders/order.entity';
 import { JoinedRoomEntity } from 'src/socket/joined-room/joined-room.entity';
 import { MessageEntity } from 'src/socket/messages/message.entity';
+import { RoomEntity } from 'src/socket/rooms/room.entity';
 import { encodePassword } from 'src/utils/bcrypt';
 import { Role } from 'src/utils/types';
 import {
@@ -11,7 +12,7 @@ import {
   BeforeUpdate,
   Column,
   Entity,
-  ManyToOne,
+  ManyToMany,
   OneToMany,
 } from 'typeorm';
 
@@ -59,7 +60,10 @@ export class UserEntity extends BaseEntity<UserEntity> {
   })
   image?: string;
 
-  @ManyToOne(() => JoinedRoomEntity, (joinedRoom) => joinedRoom.user, {
+  @ManyToMany(() => RoomEntity, (room) => room.users)
+  rooms: RoomEntity[];
+
+  @OneToMany(() => JoinedRoomEntity, (joinedRoom) => joinedRoom.user, {
     onDelete: 'CASCADE',
   })
   joinedRooms: JoinedRoomEntity[];
