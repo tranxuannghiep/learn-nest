@@ -2,9 +2,18 @@ import { Exclude, Expose, Transform } from 'class-transformer';
 import { BookEntity } from 'src/books/book.entity';
 import { BaseEntity } from 'src/common/mysql/base.entity';
 import { OrderEntity } from 'src/orders/order.entity';
+import { JoinedRoomEntity } from 'src/socket/joined-room/joined-room.entity';
+import { MessageEntity } from 'src/socket/messages/message.entity';
 import { encodePassword } from 'src/utils/bcrypt';
 import { Role } from 'src/utils/types';
-import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany } from 'typeorm';
+import {
+  BeforeInsert,
+  BeforeUpdate,
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 
 @Entity({
   name: 'user',
@@ -49,6 +58,14 @@ export class UserEntity extends BaseEntity<UserEntity> {
     nullable: true,
   })
   image?: string;
+
+  @ManyToOne(() => JoinedRoomEntity, (joinedRoom) => joinedRoom.user, {
+    onDelete: 'CASCADE',
+  })
+  joinedRooms: JoinedRoomEntity[];
+
+  @OneToMany(() => MessageEntity, (message) => message.user)
+  messages: MessageEntity[];
 
   @BeforeInsert()
   @BeforeUpdate()
