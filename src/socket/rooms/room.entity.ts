@@ -1,7 +1,6 @@
 import { BaseEntity } from 'src/common/mysql/base.entity';
 import { UserEntity } from 'src/users/user.entity';
-import { Column, Entity, ManyToMany, OneToMany } from 'typeorm';
-import { JoinedRoomEntity } from '../joined-room/joined-room.entity';
+import { Column, Entity, JoinTable, ManyToMany, OneToMany } from 'typeorm';
 import { MessageEntity } from '../messages/message.entity';
 
 @Entity({ name: 'room' })
@@ -13,12 +12,18 @@ export class RoomEntity extends BaseEntity<RoomEntity> {
   description: string;
 
   @ManyToMany(() => UserEntity, (user) => user.rooms)
-  users: UserEntity[];
-
-  @OneToMany(() => JoinedRoomEntity, (joinedRoom) => joinedRoom.room, {
-    onDelete: 'CASCADE',
+  @JoinTable({
+    name: 'joined-room',
+    joinColumn: {
+      name: 'room_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'user_id',
+      referencedColumnName: 'id',
+    },
   })
-  joinedRooms: JoinedRoomEntity[];
+  users: UserEntity[];
 
   @OneToMany(() => MessageEntity, (message) => message.room)
   messages: MessageEntity[];

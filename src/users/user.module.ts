@@ -6,10 +6,11 @@ import { UserEntity } from './user.entity';
 import { UserService } from './user.service';
 import { BullModule } from '@nestjs/bull';
 import { EmailConsumer } from './consumers/email.consumer';
+import { RoomEntity } from 'src/socket/rooms/room.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([UserEntity, RoomEntity]),
     S3Module,
     BullModule.registerQueue({
       name: 'send-mail',

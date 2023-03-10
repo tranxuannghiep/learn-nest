@@ -2,7 +2,6 @@ import { Exclude, Expose, Transform } from 'class-transformer';
 import { BookEntity } from 'src/books/book.entity';
 import { BaseEntity } from 'src/common/mysql/base.entity';
 import { OrderEntity } from 'src/orders/order.entity';
-import { JoinedRoomEntity } from 'src/socket/joined-room/joined-room.entity';
 import { MessageEntity } from 'src/socket/messages/message.entity';
 import { RoomEntity } from 'src/socket/rooms/room.entity';
 import { encodePassword } from 'src/utils/bcrypt';
@@ -62,11 +61,6 @@ export class UserEntity extends BaseEntity<UserEntity> {
 
   @ManyToMany(() => RoomEntity, (room) => room.users)
   rooms: RoomEntity[];
-
-  @OneToMany(() => JoinedRoomEntity, (joinedRoom) => joinedRoom.user, {
-    onDelete: 'CASCADE',
-  })
-  joinedRooms: JoinedRoomEntity[];
 
   @OneToMany(() => MessageEntity, (message) => message.user)
   messages: MessageEntity[];

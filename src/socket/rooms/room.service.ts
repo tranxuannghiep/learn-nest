@@ -1,11 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource, In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { RoomEntity } from './room.entity';
-import { CreateRoomDto } from './dto/create-room.dto';
-import { JoinedRoomEntity } from '../joined-room/joined-room.entity';
 import { UserEntity } from 'src/users/user.entity';
+import { DataSource, In, Repository } from 'typeorm';
+import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
+import { RoomEntity } from './room.entity';
 
 @Injectable()
 export class RoomService {
@@ -28,17 +27,14 @@ export class RoomService {
     const { manager } = queryRunner;
 
     try {
-      const room = await manager.save(newRoom);
       const user = await manager.findOne(UserEntity, {
         where: { id: userId },
       });
 
       if (!user) throw new NotFoundException('user not found !');
+      newRoom.users = [user];
+      await manager.save(newRoom);
 
-      await manager.insert(JoinedRoomEntity, {
-        room,
-        user,
-      });
       await queryRunner.commitTransaction();
       return newRoom;
     } catch (error) {
@@ -75,7 +71,7 @@ export class RoomService {
 
     if (deleteUsers) {
       room.users = room.users.filter((u) => !users.includes(u.id));
-    } else {
+    } else if (users) {
       const listUser = await this.userRepository.findBy({ id: In(users) });
       const newUsers = listUser.filter(
         (user) => !room.users.some((u) => u.id === user.id),

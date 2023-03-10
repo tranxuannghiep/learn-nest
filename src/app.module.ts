@@ -18,7 +18,6 @@ import appConfig from './config/app.config';
 import * as redisStore from 'cache-manager-redis-store';
 import { BullModule } from '@nestjs/bull';
 import { SocketModule } from './socket/socket.module';
-import { JoinedRoomEntity } from './socket/joined-room/joined-room.entity';
 import { RoomEntity } from './socket/rooms/room.entity';
 import { MessageEntity } from './socket/messages/message.entity';
 import { RoomModule } from './socket/rooms/room.module';
@@ -52,7 +51,6 @@ import { RoomModule } from './socket/rooms/room.module';
           OrderEntity,
           OrderDetailEntity,
           RoomEntity,
-          JoinedRoomEntity,
           MessageEntity,
         ],
         synchronize: true,
