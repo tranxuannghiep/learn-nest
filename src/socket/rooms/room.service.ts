@@ -82,4 +82,12 @@ export class RoomService {
 
     return await this.roomRepository.save({ ...room, ...updateRoom });
   }
+
+  async getListRoom(userId: number) {
+    return this.roomRepository.find({
+      where: {
+        users: { id: userId },
+      },
+    });
+  }
 }

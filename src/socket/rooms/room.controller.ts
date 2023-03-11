@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   Patch,
   Post,
@@ -33,5 +34,12 @@ export class RoomController {
   ) {
     const { id: userId } = req.user;
     return this.roomService.updateRoom(userId, updateRoomDto, roomId);
+  }
+
+  @Get('all')
+  @UseGuards(JwtAuthGuard)
+  getListRoom(@Req() req: Request) {
+    const { id } = req.user;
+    return this.roomService.getListRoom(id);
   }
 }
