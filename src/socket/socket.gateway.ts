@@ -12,6 +12,8 @@ import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { MessageService } from './messages/message.service';
 import * as cookie from 'cookie';
+import { CreateMessageDto } from './messages/dto/create-message.dto';
+
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -65,7 +67,7 @@ export class SocketGateWay
 
   @SubscribeMessage('message')
   async handleEvent(
-    @MessageBody() message: string,
+    @MessageBody() data: CreateMessageDto,
     @ConnectedSocket() client: Socket,
   ) {
     const { roomId } = client.handshake.query;
@@ -80,7 +82,7 @@ export class SocketGateWay
     const newMessage = await this.messageService.createMessage(
       (accessToken as string) || '',
       Number(roomId as string),
-      message,
+      data,
     );
     this.server.to(roomId).emit('newMessage', newMessage);
   }

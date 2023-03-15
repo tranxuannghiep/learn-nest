@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/user.entity';
 import { Repository } from 'typeorm';
 import { RoomEntity } from '../rooms/room.entity';
+import { CreateMessageDto } from './dto/create-message.dto';
 import { MessageEntity } from './message.entity';
 
 @Injectable()
@@ -18,13 +19,13 @@ export class MessageService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async createMessage(token: string, roomId: number, text: string) {
+  async createMessage(token: string, roomId: number, data: CreateMessageDto) {
     const { existedRoom, existedUser } = await this.getUserAndRoom(
       token,
       roomId,
     );
 
-    const newMessage = new MessageEntity({ text });
+    const newMessage = new MessageEntity(data);
     newMessage.user = existedUser;
     newMessage.room = existedRoom;
 
