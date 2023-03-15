@@ -32,30 +32,37 @@ export class MessageService {
   }
 
   async getMessageByRoom(token: string, roomId: number) {
-    await this.getUserAndRoom(token, roomId);
+    await this.verifyRoom(token, roomId);
+
     return this.messageRepository.find({
       where: { room: { id: roomId } },
       relations: ['user'],
     });
   }
 
-  async getUserAndRoom(token: string, roomId: number) {
+  async verifyUser(token: string) {
     const decodedToken = await this.jwtService.verifyAsync(token as string, {
       secret: '123456',
     });
-
     if (!decodedToken)
       throw new NotFoundException('Room not found or user is not in room.');
-    const { id } = decodedToken;
+    return decodedToken;
+  }
 
+  async verifyRoom(token: string, roomId: number) {
+    const { id } = await this.verifyUser(token);
     const existedRoom = await this.roomRepository.findOne({
       where: { id: roomId, users: { id: id } },
     });
-
     if (!existedRoom)
       throw new NotFoundException('Room not found or user is not in room.');
+    return { existedRoom, userId: id };
+  }
 
-    const existedUser = await this.userRepository.findOneBy({ id });
+  async getUserAndRoom(token: string, roomId: number) {
+    const { existedRoom, userId } = await this.verifyRoom(token, roomId);
+
+    const existedUser = await this.userRepository.findOneBy({ id: userId });
 
     return { existedRoom, existedUser };
   }

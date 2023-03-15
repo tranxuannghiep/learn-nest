@@ -11,18 +11,12 @@ import {
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { MessageService } from './messages/message.service';
-
-// interface MessageType {
-//   userId: number;
-//   text: string;
-//   displayName: string;
-//   createAt: string;
-//   photoUrl: string | null;
-// }
-
+import * as cookie from 'cookie';
 @WebSocketGateway({
   cors: {
     origin: '*',
+    credentials: true,
+    exposedHeaders: 'Set-Cookie',
   },
 })
 export class SocketGateWay
@@ -40,15 +34,17 @@ export class SocketGateWay
   async handleConnection(client: Socket) {
     this.logger.warn(`Client connected: ${client.id}`);
     this.server.emit('newConnection', `Client connected: ${client.id}`);
-    const { token } = client.handshake.headers;
     const { roomId } = client.handshake.query;
-    if (!token || !roomId) {
+    const cookies = cookie.parse(client.request.headers.cookie || '');
+    const accessToken = cookies['access_token'];
+
+    if (!accessToken || !roomId) {
       this.handleDisconnect(client);
       return;
     }
 
     const allMessages = await this.messageService.getMessageByRoom(
-      (token as string) || '',
+      (accessToken as string) || '',
       Number(roomId as string),
     );
 
@@ -72,16 +68,17 @@ export class SocketGateWay
     @MessageBody() message: string,
     @ConnectedSocket() client: Socket,
   ) {
-    const { token } = client.handshake.headers;
     const { roomId } = client.handshake.query;
+    const cookies = cookie.parse(client.request.headers.cookie || '');
+    const accessToken = cookies['access_token'];
 
-    if (!token || !roomId) {
+    if (!accessToken || !roomId) {
       this.handleDisconnect(client);
       return;
     }
 
     const newMessage = await this.messageService.createMessage(
-      (token as string) || '',
+      (accessToken as string) || '',
       Number(roomId as string),
       message,
     );

@@ -12,7 +12,13 @@ import { ConfigService } from '@nestjs/config';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true });
+  const app = await NestFactory.create(AppModule, {
+    cors: {
+      origin: true,
+      credentials: true,
+      exposedHeaders: 'Set-Cookie',
+    },
+  });
   const configService = app.get(ConfigService);
   const config = new DocumentBuilder()
     .setTitle('Lean nest')
@@ -32,8 +38,6 @@ async function bootstrap() {
 
   app.useWebSocketAdapter(new IoAdapter(app));
   app.use(cookieParser());
-  app.enableCors();
-
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
