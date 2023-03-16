@@ -13,6 +13,7 @@ import { Server, Socket } from 'socket.io';
 import { MessageService } from './messages/message.service';
 import * as cookie from 'cookie';
 import { CreateMessageDto } from './messages/dto/create-message.dto';
+import { JwtService } from '@nestjs/jwt';
 
 @WebSocketGateway({
   cors: {
@@ -24,7 +25,10 @@ import { CreateMessageDto } from './messages/dto/create-message.dto';
 export class SocketGateWay
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  constructor(private readonly messageService: MessageService) {}
+  constructor(
+    private readonly messageService: MessageService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   @WebSocketServer() server: Server;
   private logger: Logger = new Logger('SocketGateway');
@@ -36,22 +40,16 @@ export class SocketGateWay
   async handleConnection(client: Socket) {
     this.logger.warn(`Client connected: ${client.id}`);
     this.server.emit('newConnection', `Client connected: ${client.id}`);
-    const { roomId } = client.handshake.query;
-    const cookies = cookie.parse(client.request.headers.cookie || '');
-    const accessToken = cookies['access_token'];
 
-    if (!accessToken || !roomId) {
-      this.handleDisconnect(client);
-      return;
-    }
+    const decodedToken = await this.handleCheckVerify(client);
+    const { roomId } = client.handshake.query;
 
     const allMessages = await this.messageService.getMessageByRoom(
-      (accessToken as string) || '',
+      decodedToken,
       Number(roomId as string),
     );
 
     client.join(roomId);
-
     client.emit('allMessages', allMessages);
   }
 
@@ -71,19 +69,39 @@ export class SocketGateWay
     @ConnectedSocket() client: Socket,
   ) {
     const { roomId } = client.handshake.query;
-    const cookies = cookie.parse(client.request.headers.cookie || '');
-    const accessToken = cookies['access_token'];
-
-    if (!accessToken || !roomId) {
-      this.handleDisconnect(client);
-      return;
-    }
+    const decodedToken = await this.handleCheckVerify(client);
 
     const newMessage = await this.messageService.createMessage(
-      (accessToken as string) || '',
+      decodedToken,
       Number(roomId as string),
       data,
     );
     this.server.to(roomId).emit('newMessage', newMessage);
+  }
+
+  async handleCheckVerify(client: Socket) {
+    const cookies = cookie.parse(client.request.headers.cookie || '');
+    const accessToken = cookies['access_token'];
+    const { roomId } = client.handshake.query;
+    if (!accessToken || !roomId) {
+      this.handleDisconnect(client);
+      return;
+    }
+    try {
+      const decodedToken = await this.jwtService.verifyAsync(
+        accessToken as string,
+        {
+          secret: '123456',
+        },
+      );
+      if (!decodedToken) {
+        this.handleDisconnect(client);
+        return;
+      }
+      return decodedToken;
+    } catch (error) {
+      this.handleDisconnect(client);
+      return;
+    }
   }
 }

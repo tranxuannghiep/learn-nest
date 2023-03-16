@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/user.entity';
 import { Repository } from 'typeorm';
@@ -16,12 +15,15 @@ export class MessageService {
     private readonly messageRepository: Repository<MessageEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
-    private readonly jwtService: JwtService,
   ) {}
 
-  async createMessage(token: string, roomId: number, data: CreateMessageDto) {
+  async createMessage(
+    decodedToken: any,
+    roomId: number,
+    data: CreateMessageDto,
+  ) {
     const { existedRoom, existedUser } = await this.getUserAndRoom(
-      token,
+      decodedToken,
       roomId,
     );
 
@@ -32,8 +34,8 @@ export class MessageService {
     return this.messageRepository.save(newMessage);
   }
 
-  async getMessageByRoom(token: string, roomId: number) {
-    await this.verifyRoom(token, roomId);
+  async getMessageByRoom(decodedToken: any, roomId: number) {
+    await this.verifyRoom(decodedToken, roomId);
 
     return this.messageRepository.find({
       where: { room: { id: roomId } },
@@ -41,17 +43,8 @@ export class MessageService {
     });
   }
 
-  async verifyUser(token: string) {
-    const decodedToken = await this.jwtService.verifyAsync(token as string, {
-      secret: '123456',
-    });
-    if (!decodedToken)
-      throw new NotFoundException('Room not found or user is not in room.');
-    return decodedToken;
-  }
-
-  async verifyRoom(token: string, roomId: number) {
-    const { id } = await this.verifyUser(token);
+  async verifyRoom(decodedToken: any, roomId: number) {
+    const { id } = decodedToken;
     const existedRoom = await this.roomRepository.findOne({
       where: { id: roomId, users: { id: id } },
     });
@@ -60,8 +53,8 @@ export class MessageService {
     return { existedRoom, userId: id };
   }
 
-  async getUserAndRoom(token: string, roomId: number) {
-    const { existedRoom, userId } = await this.verifyRoom(token, roomId);
+  async getUserAndRoom(decodedToken: any, roomId: number) {
+    const { existedRoom, userId } = await this.verifyRoom(decodedToken, roomId);
 
     const existedUser = await this.userRepository.findOneBy({ id: userId });
 
