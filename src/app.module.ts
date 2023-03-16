@@ -56,7 +56,7 @@ import { MessageModule } from './socket/messages/message.module';
           MessageEntity,
         ],
         synchronize: true,
-        timezone: 'UTC',
+        useUTC: true,
       }),
     }),
 

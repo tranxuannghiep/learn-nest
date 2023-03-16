@@ -4,6 +4,7 @@ import { S3 } from 'aws-sdk';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const path = require('path');
 import { v4 as uuidv4 } from 'uuid';
+import { S3UploadDto } from './dto/s3-upload.dto';
 @Injectable()
 export class S3Service {
   private readonly region;
@@ -88,4 +89,18 @@ export class S3Service {
       return error;
     }
   }
+
+  getPresignedPOSTTURL = (s3UploadDto: S3UploadDto) => {
+    const { bucket, key, contentType } = s3UploadDto;
+    return this.s3.createPresignedPost({
+      Bucket: bucket,
+      Expires: 100,
+      Fields: {
+        key,
+        acl: 'public-read',
+        'Content-Type': contentType,
+      },
+      Conditions: [['content-length-range', 0, 100000]],
+    });
+  };
 }
