@@ -8,8 +8,15 @@ export class MessageEntity extends BaseEntity<MessageEntity> {
   @Column()
   text: string;
 
-  @Column()
-  type: string;
+  @Column({
+    nullable: true,
+  })
+  type?: string;
+
+  @Column({
+    nullable: true,
+  })
+  file_name?: string;
 
   @ManyToOne(() => RoomEntity, (room) => room.messages, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'room_id' })

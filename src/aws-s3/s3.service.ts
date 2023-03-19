@@ -100,7 +100,7 @@ export class S3Service {
         acl: 'public-read',
         'Content-Type': contentType,
       },
-      Conditions: [['content-length-range', 0, 100000]],
+      Conditions: [['content-length-range', 0, 5242880]], // 5MB
     });
   };
 }

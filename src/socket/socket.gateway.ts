@@ -94,7 +94,7 @@ export class SocketGateWay
           secret: '123456',
         },
       );
-      if (!decodedToken) {
+      if (!decodedToken || !decodedToken.id) {
         this.handleDisconnect(client);
         return;
       }
