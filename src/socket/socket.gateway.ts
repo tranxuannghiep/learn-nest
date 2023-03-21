@@ -42,6 +42,11 @@ export class SocketGateWay
     this.server.emit('newConnection', `Client connected: ${client.id}`);
 
     const decodedToken = await this.handleCheckVerify(client);
+    if (!decodedToken || !decodedToken.id) {
+      this.handleDisconnect(client);
+      return;
+    }
+
     const { roomId } = client.handshake.query;
 
     const allMessages = await this.messageService.getMessageByRoom(
@@ -71,6 +76,11 @@ export class SocketGateWay
     const { roomId } = client.handshake.query;
     const decodedToken = await this.handleCheckVerify(client);
 
+    if (!decodedToken || !decodedToken.id) {
+      this.handleDisconnect(client);
+      return;
+    }
+
     const newMessage = await this.messageService.createMessage(
       decodedToken,
       Number(roomId as string),
@@ -94,10 +104,7 @@ export class SocketGateWay
           secret: '123456',
         },
       );
-      if (!decodedToken || !decodedToken.id) {
-        this.handleDisconnect(client);
-        return;
-      }
+
       return decodedToken;
     } catch (error) {
       this.handleDisconnect(client);
