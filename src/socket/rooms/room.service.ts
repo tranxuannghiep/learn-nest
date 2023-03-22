@@ -84,10 +84,23 @@ export class RoomService {
   }
 
   async getListRoom(userId: number) {
-    return this.roomRepository.find({
-      where: {
-        users: { id: userId },
-      },
-    });
+    const query = this.roomRepository
+      .createQueryBuilder('room')
+      .leftJoin('room.users', 'user')
+      .leftJoin(
+        'room.messages',
+        'last_message',
+        'last_message.id = (SELECT MAX(m.id) FROM message m WHERE m.room_id = room.id)',
+      )
+      .select([
+        'room.id',
+        'room.name',
+        'last_message.id',
+        'last_message.text',
+        'last_message.createdAt',
+      ])
+      .where('user.id = :userId', { userId });
+
+    return query.getMany();
   }
 }
