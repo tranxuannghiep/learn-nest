@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/users/user.entity';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
+import { JoinedRoomEntity } from './joined-room.entity';
 import { RoomEntity } from './room.entity';
 
 @Injectable()
@@ -13,12 +14,13 @@ export class RoomService {
     private readonly roomRepository: Repository<RoomEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(JoinedRoomEntity)
+    private readonly joinedRoomRepository: Repository<JoinedRoomEntity>,
     private readonly dataSource: DataSource,
   ) {}
 
   async createRoom(userId: number, createRoomDto: CreateRoomDto) {
     const newRoom = new RoomEntity(createRoomDto);
-
     const queryRunner = this.dataSource.createQueryRunner();
 
     await queryRunner.connect();
@@ -32,8 +34,14 @@ export class RoomService {
       });
 
       if (!user) throw new NotFoundException('user not found !');
-      newRoom.users = [user];
-      await manager.save(newRoom);
+
+      const room = await manager.save(newRoom);
+
+      await manager.insert(JoinedRoomEntity, {
+        unreadCount: 0,
+        user: user,
+        room: room,
+      });
 
       await queryRunner.commitTransaction();
       return newRoom;
@@ -55,29 +63,46 @@ export class RoomService {
       where: {
         id: roomId,
       },
-      relations: ['users'],
     });
 
     if (!room) throw new NotFoundException(404, 'Room not found !!!');
 
     const checkUserInRoom = await this.roomRepository.findOneBy({
       id: roomId,
-      users: {
-        id: userId,
+      joinedRooms: {
+        user: {
+          id: userId,
+        },
       },
     });
 
     if (!checkUserInRoom) throw new NotFoundException('User not in room !!!');
 
     if (deleteUsers) {
-      room.users = room.users.filter((u) => !users.includes(u.id));
+      await this.joinedRoomRepository
+        .createQueryBuilder()
+        .delete()
+        .from(JoinedRoomEntity)
+        .where('room.id = :roomId', { roomId })
+        .andWhere('user.id IN (:users)', { users })
+        .execute();
     } else if (users) {
-      const listUser = await this.userRepository.findBy({ id: In(users) });
-      const newUsers = listUser.filter(
-        (user) => !room.users.some((u) => u.id === user.id),
-      );
+      const usersToAdd = await this.userRepository
+        .createQueryBuilder('user')
+        .leftJoinAndSelect('user.joinedRooms', 'joinedRoom')
+        .where('user.id IN (:...users)', { users })
+        .andWhere('joinedRoom.room_id != :roomId', { roomId })
+        .getMany();
 
-      room.users = [...room.users, ...newUsers];
+      const newJoinedRooms = usersToAdd.map((user) => {
+        const joinedRoom = new JoinedRoomEntity({
+          room: room,
+          user: user,
+          unreadCount: 0,
+        });
+        return joinedRoom;
+      });
+      await this.joinedRoomRepository.save(newJoinedRooms);
     }
 
     return await this.roomRepository.save({ ...room, ...updateRoom });
@@ -86,7 +111,8 @@ export class RoomService {
   async getListRoom(userId: number) {
     const query = this.roomRepository
       .createQueryBuilder('room')
-      .leftJoin('room.users', 'user')
+      .leftJoinAndSelect('room.joinedRooms', 'joinedRoom')
+      .leftJoinAndSelect('joinedRoom.user', 'userJoined')
       .leftJoin(
         'room.messages',
         'last_message',
@@ -98,8 +124,13 @@ export class RoomService {
         'last_message.id',
         'last_message.text',
         'last_message.createdAt',
+        'joinedRoom.id',
+        'joinedRoom.unreadCount',
+        'userJoined.id',
+        'userJoined.firstname',
+        'userJoined.lastname',
       ])
-      .where('user.id = :userId', { userId });
+      .where('joinedRoom.user_id = :userId', { userId });
 
     return query.getMany();
   }

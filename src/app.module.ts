@@ -22,6 +22,7 @@ import { RoomEntity } from './socket/rooms/room.entity';
 import { MessageEntity } from './socket/messages/message.entity';
 import { RoomModule } from './socket/rooms/room.module';
 import { MessageModule } from './socket/messages/message.module';
+import { JoinedRoomEntity } from './socket/rooms/joined-room.entity';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { MessageModule } from './socket/messages/message.module';
           OrderDetailEntity,
           RoomEntity,
           MessageEntity,
+          JoinedRoomEntity,
         ],
         synchronize: true,
         useUTC: true,

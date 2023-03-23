@@ -46,7 +46,7 @@ export class MessageService {
   async verifyRoom(decodedToken: any, roomId: number) {
     const { id } = decodedToken;
     const existedRoom = await this.roomRepository.findOne({
-      where: { id: roomId, users: { id: id } },
+      where: { id: roomId, joinedRooms: { user: { id } } },
     });
     if (!existedRoom)
       throw new NotFoundException('Room not found or user is not in room.');
