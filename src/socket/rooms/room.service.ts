@@ -112,23 +112,23 @@ export class RoomService {
     const query = this.roomRepository
       .createQueryBuilder('room')
       .leftJoinAndSelect('room.joinedRooms', 'joinedRoom')
-      .leftJoinAndSelect('joinedRoom.user', 'userJoined')
       .leftJoin(
         'room.messages',
         'last_message',
         'last_message.id = (SELECT MAX(m.id) FROM message m WHERE m.room_id = room.id)',
       )
+      .leftJoinAndSelect('last_message.user', 'sender')
       .select([
         'room.id',
         'room.name',
         'last_message.id',
         'last_message.text',
         'last_message.createdAt',
+        'sender.id',
+        'sender.firstname',
+        'sender.lastname',
         'joinedRoom.id',
         'joinedRoom.unreadCount',
-        'userJoined.id',
-        'userJoined.firstname',
-        'userJoined.lastname',
       ])
       .where('joinedRoom.user_id = :userId', { userId });
 
