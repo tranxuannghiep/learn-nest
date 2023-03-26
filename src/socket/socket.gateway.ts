@@ -19,6 +19,7 @@ import { uniq } from 'lodash';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JoinedRoomEntity } from './rooms/joined-room.entity';
 import { Repository } from 'typeorm';
+import { MessageEntity } from './messages/message.entity';
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -55,14 +56,7 @@ export class SocketGateWay
     }
 
     const { roomId } = client.handshake.query;
-
-    const allMessages = await this.messageService.getMessageByRoom(
-      decodedToken,
-      Number(roomId as string),
-    );
-
     client.join(roomId);
-    client.emit('allMessages', allMessages);
   }
 
   async handleDisconnect(client: Socket) {
@@ -77,6 +71,29 @@ export class SocketGateWay
 
     client.leave(roomId as string);
     client.disconnect(true);
+  }
+
+  //SubscribeMessage when joinRoom
+  @SubscribeMessage('connectToRoom')
+  async handleConnectRoom(@ConnectedSocket() client: Socket) {
+    const decodedToken = await this.handleCheckVerify(client);
+    if (!decodedToken || !decodedToken.id) {
+      this.handleDisconnect(client);
+      return;
+    }
+
+    const { roomId } = client.handshake.query;
+
+    const allMessages = await this.messageService.getMessageByRoom(
+      decodedToken,
+      Number(roomId as string),
+    );
+
+    client.join(roomId);
+    client.emit('allMessages', allMessages);
+
+    await this.changeUserListConnect(decodedToken.id, roomId as string);
+    await this.handleClearNotifyMessage(decodedToken.id, roomId as string);
   }
 
   @SubscribeMessage('message')
@@ -98,38 +115,8 @@ export class SocketGateWay
       data,
     );
 
-    const listUsersID = await this.changeUserListConnect(
-      decodedToken.id,
-      roomId as string,
-    );
-
-    await this.joinedRoomRepository
-      .createQueryBuilder()
-      .update(JoinedRoomEntity)
-      .set({ unreadCount: () => 'unread_count + 1' })
-      .where('user_id NOT IN (:...userIds)', { userIds: listUsersID })
-      .andWhere('room_id = :roomId', { roomId })
-      .execute();
-
-    const unreadList = await this.joinedRoomRepository.find({
-      where: {
-        room: { id: Number(roomId as string) },
-      },
-      relations: ['user'],
-      select: {
-        id: true,
-        unreadCount: true,
-        user: {
-          id: true,
-        },
-      },
-    });
-
     this.server.to(roomId).emit('newMessage', newMessage);
-    this.server.to(roomId).emit('notifyMessage', {
-      lastMessage: newMessage,
-      unreadCountList: unreadList,
-    });
+    await this.handleEmitNotifyMessage(roomId as string, newMessage);
   }
 
   async handleCheckVerify(client: Socket) {
@@ -178,5 +165,54 @@ export class SocketGateWay
 
     await this.cacheManager.set('conversations', clientList);
     return clientList[`room_${roomId}`];
+  }
+
+  async handleEmitNotifyMessage(roomId: string, newMessage: MessageEntity) {
+    const clientList: any =
+      (await this.cacheManager.get('conversations')) || {};
+
+    const listUsersID = clientList[`room_${roomId}`] || [];
+
+    await this.joinedRoomRepository
+      .createQueryBuilder()
+      .update(JoinedRoomEntity)
+      .set({ unreadCount: () => 'unread_count + 1' })
+      .where(listUsersID.length > 0 ? 'user_id NOT IN (:...userIds)' : '1=1', {
+        userIds: listUsersID,
+      })
+      .andWhere('room_id = :roomId', { roomId })
+      .execute();
+
+    const unreadList = await this.joinedRoomRepository.find({
+      where: {
+        room: { id: Number(roomId as string) },
+      },
+      relations: ['user'],
+      select: {
+        id: true,
+        unreadCount: true,
+        user: {
+          id: true,
+        },
+      },
+    });
+
+    this.server.to(roomId).emit('notifyMessage', {
+      lastMessage: newMessage,
+      unreadCountList: unreadList,
+    });
+  }
+
+  async handleClearNotifyMessage(userId: number, roomId: string) {
+    await this.joinedRoomRepository
+      .createQueryBuilder()
+      .update(JoinedRoomEntity)
+      .set({ unreadCount: 0 })
+      .where('user_id = :userId', { userId })
+      .andWhere('room_id = :roomId', { roomId })
+      .andWhere('unread_count != 0')
+      .execute();
+
+    this.server.to(roomId).emit('clearNotify');
   }
 }
