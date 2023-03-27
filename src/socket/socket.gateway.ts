@@ -54,46 +54,58 @@ export class SocketGateWay
       this.handleDisconnect(client);
       return;
     }
-
-    const { roomId } = client.handshake.query;
-    client.join(roomId);
   }
 
   async handleDisconnect(client: Socket) {
     this.logger.warn(`Client disconnected: ${client.id}`);
-    const { roomId } = client.handshake.query;
-
-    if (!roomId) return;
-
-    const decodedToken = await this.handleCheckVerify(client);
-
-    await this.changeUserListConnect(decodedToken.id, roomId as string, true);
-
-    client.leave(roomId as string);
     client.disconnect(true);
   }
 
-  //SubscribeMessage when joinRoom
-  @SubscribeMessage('connectToRoom')
-  async handleConnectRoom(@ConnectedSocket() client: Socket) {
+  @SubscribeMessage('getNotifyToRoom')
+  async getNotifyToRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() roomId: string,
+  ) {
     const decodedToken = await this.handleCheckVerify(client);
-    if (!decodedToken || !decodedToken.id) {
+    if (!decodedToken || !decodedToken.id || !roomId) {
+      this.handleDisconnect(client);
+      return;
+    }
+    client.join(roomId);
+  }
+
+  @SubscribeMessage('connectToRoom')
+  async handleConnectRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() roomId: string,
+  ) {
+    const decodedToken = await this.handleCheckVerify(client);
+    if (!decodedToken || !decodedToken.id || !roomId) {
       this.handleDisconnect(client);
       return;
     }
 
-    const { roomId } = client.handshake.query;
-
     const allMessages = await this.messageService.getMessageByRoom(
       decodedToken,
-      Number(roomId as string),
+      Number(roomId),
     );
 
     client.join(roomId);
     client.emit('allMessages', allMessages);
 
-    await this.changeUserListConnect(decodedToken.id, roomId as string);
-    await this.handleClearNotifyMessage(decodedToken.id, roomId as string);
+    await this.changeUserListConnect(decodedToken.id, roomId);
+    await this.handleClearNotifyMessage(decodedToken.id, roomId);
+  }
+
+  @SubscribeMessage('leaveToRoom')
+  async handleLeaveRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() roomId: string,
+  ) {
+    const decodedToken = await this.handleCheckVerify(client);
+    await this.changeUserListConnect(decodedToken.id, roomId, true);
+
+    client.leave(roomId);
   }
 
   @SubscribeMessage('message')
@@ -101,29 +113,28 @@ export class SocketGateWay
     @MessageBody() data: CreateMessageDto,
     @ConnectedSocket() client: Socket,
   ) {
-    const { roomId } = client.handshake.query;
+    const { roomId } = data;
     const decodedToken = await this.handleCheckVerify(client);
 
-    if (!decodedToken || !decodedToken.id) {
+    if (!decodedToken || !decodedToken.id || !roomId) {
       this.handleDisconnect(client);
       return;
     }
 
     const newMessage = await this.messageService.createMessage(
       decodedToken,
-      Number(roomId as string),
       data,
     );
 
     this.server.to(roomId).emit('newMessage', newMessage);
-    await this.handleEmitNotifyMessage(roomId as string, newMessage);
+    await this.handleEmitNotifyMessage(roomId, newMessage);
   }
 
   async handleCheckVerify(client: Socket) {
     const cookies = cookie.parse(client.request.headers.cookie || '');
     const accessToken = cookies['access_token'];
-    const { roomId } = client.handshake.query;
-    if (!accessToken || !roomId) {
+
+    if (!accessToken) {
       this.handleDisconnect(client);
       return;
     }
@@ -185,7 +196,7 @@ export class SocketGateWay
 
     const unreadList = await this.joinedRoomRepository.find({
       where: {
-        room: { id: Number(roomId as string) },
+        room: { id: Number(roomId) },
       },
       relations: ['user'],
       select: {
@@ -200,6 +211,7 @@ export class SocketGateWay
     this.server.to(roomId).emit('notifyMessage', {
       lastMessage: newMessage,
       unreadCountList: unreadList,
+      roomId,
     });
   }
 
@@ -213,6 +225,6 @@ export class SocketGateWay
       .andWhere('unread_count != 0')
       .execute();
 
-    this.server.to(roomId).emit('clearNotify');
+    this.server.to(roomId).emit('clearNotify', roomId);
   }
 }

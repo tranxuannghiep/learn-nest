@@ -17,17 +17,14 @@ export class MessageService {
     private readonly userRepository: Repository<UserEntity>,
   ) {}
 
-  async createMessage(
-    decodedToken: any,
-    roomId: number,
-    data: CreateMessageDto,
-  ) {
+  async createMessage(decodedToken: any, data: CreateMessageDto) {
+    const { roomId, ...messageData } = data;
     const { existedRoom, existedUser } = await this.getUserAndRoom(
       decodedToken,
-      roomId,
+      Number(roomId),
     );
 
-    const newMessage = new MessageEntity(data);
+    const newMessage = new MessageEntity(messageData);
     newMessage.user = existedUser;
     newMessage.room = existedRoom;
 
