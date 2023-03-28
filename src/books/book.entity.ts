@@ -53,7 +53,7 @@ export class BookEntity extends BaseEntity<BookEntity> {
   @Column()
   quantity: number;
 
-  @Column()
+  @Column({ default: 0 })
   quantity_sold: number;
 
   @OneToMany(() => OrderDetailEntity, (orderDetail) => orderDetail.book)

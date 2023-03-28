@@ -63,7 +63,7 @@ export class BookController {
   })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @Roles(Role.Seller)
+  @Roles(Role.Seller, Role.Admin)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @UseInterceptors(FilesInterceptor('file', 5))
   async createBook(
