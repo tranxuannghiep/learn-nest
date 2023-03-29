@@ -87,7 +87,10 @@ export class BookController {
 
   @Get('all')
   async getAll(@Query() bookQueryDto: BookQueryDto) {
-    return this.bookService.getAll(bookQueryDto);
+    const data = await this.bookService.getAll(bookQueryDto);
+    return {
+      data,
+    };
   }
 
   @Post('upload')
@@ -154,7 +157,7 @@ export class BookController {
     type: UpdateBookSwagger,
   })
   @Patch(':id')
-  @Roles(Role.Seller)
+  @Roles(Role.Seller, Role.Admin)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @UseInterceptors(FilesInterceptor('file', 5))
   async updateBook(

@@ -19,6 +19,7 @@ async function bootstrap() {
       exposedHeaders: 'Set-Cookie',
     },
   });
+  app.setGlobalPrefix('api');
   const configService = app.get(ConfigService);
   const config = new DocumentBuilder()
     .setTitle('Lean nest')
