@@ -179,6 +179,7 @@ export class BookController {
 
   @Get(':id')
   async getBookDetail(@Param('id') id: number) {
-    return this.bookService.getBookDetail(id);
+    const data = await this.bookService.getBookDetail(id);
+    return { data };
   }
 }
